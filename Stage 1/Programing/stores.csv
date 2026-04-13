@@ -1,0 +1,301 @@
+StoreID,StoreName,Phone,Rating,WebSiteUrl
+1,RL Jerusalem 1,0274897187,3,https://www.rl-jerusalem-1.co.il
+2,RL Tel Aviv 1,0247547516,4,https://www.rl-tel-aviv-1.co.il
+3,RL Haifa 1,0243133333,1,https://www.rl-haifa-1.co.il
+4,RL Beersheba 1,0229796521,4,https://www.rl-beersheba-1.co.il
+5,RL Eilat 1,0202739876,1,https://www.rl-eilat-1.co.il
+6,RL Ashdod 1,0257820121,3,https://www.rl-ashdod-1.co.il
+7,RL Netanya 1,0212615278,5,https://www.rl-netanya-1.co.il
+8,RL Petah Tikva 1,0280484756,4,https://www.rl-petah-tikva-1.co.il
+9,RL Rishon LeZion 1,0237983922,2,https://www.rl-rishon-lezion-1.co.il
+10,RL Holon 1,0287918504,3,https://www.rl-holon-1.co.il
+11,RL Rehovot 1,0275024531,3,https://www.rl-rehovot-1.co.il
+12,RL Herzliya 1,0249692736,4,https://www.rl-herzliya-1.co.il
+13,RL Ra'anana 1,0293424510,5,https://www.rl-raanana-1.co.il
+14,RL Modi'in 1,0246132879,3,https://www.rl-modiin-1.co.il
+15,RL Hadera 1,0288335662,1,https://www.rl-hadera-1.co.il
+16,RL Kfar Saba 1,0282175178,2,https://www.rl-kfar-saba-1.co.il
+17,RL Lod 1,0229920680,1,https://www.rl-lod-1.co.il
+18,RL Ramla 1,0246046251,3,https://www.rl-ramla-1.co.il
+19,RL Beit Shemesh 1,0285040965,1,https://www.rl-beit-shemesh-1.co.il
+20,RL Acre 1,0287211264,1,https://www.rl-acre-1.co.il
+21,RL Tiberias 1,0287064708,3,https://www.rl-tiberias-1.co.il
+22,RL Nazareth 1,0204845862,4,https://www.rl-nazareth-1.co.il
+23,RL Karmiel 1,0285748913,4,https://www.rl-karmiel-1.co.il
+24,RL Nahariya 1,0293904824,1,https://www.rl-nahariya-1.co.il
+25,RL Afula 1,0270444327,3,https://www.rl-afula-1.co.il
+26,RL Kiryat Gat 1,0255147360,5,https://www.rl-kiryat-gat-1.co.il
+27,RL Kiryat Shmona 1,0276783647,5,https://www.rl-kiryat-shmona-1.co.il
+28,RL Dimona 1,0253367624,4,https://www.rl-dimona-1.co.il
+29,RL Arad 1,0205835147,3,https://www.rl-arad-1.co.il
+30,RL Ashkelon 1,0227632139,5,https://www.rl-ashkelon-1.co.il
+31,RL Jerusalem 2,0260247499,4,https://www.rl-jerusalem-2.co.il
+32,RL Tel Aviv 2,0213902034,5,https://www.rl-tel-aviv-2.co.il
+33,RL Haifa 2,0277206243,2,https://www.rl-haifa-2.co.il
+34,RL Beersheba 2,0266308164,2,https://www.rl-beersheba-2.co.il
+35,RL Eilat 2,0212927541,5,https://www.rl-eilat-2.co.il
+36,RL Ashdod 2,0251704471,3,https://www.rl-ashdod-2.co.il
+37,RL Netanya 2,0244402177,5,https://www.rl-netanya-2.co.il
+38,RL Petah Tikva 2,0293468091,2,https://www.rl-petah-tikva-2.co.il
+39,RL Rishon LeZion 2,0269517982,1,https://www.rl-rishon-lezion-2.co.il
+40,RL Holon 2,0275090255,1,https://www.rl-holon-2.co.il
+41,RL Rehovot 2,0259764920,3,https://www.rl-rehovot-2.co.il
+42,RL Herzliya 2,0262454999,4,https://www.rl-herzliya-2.co.il
+43,RL Ra'anana 2,0270878398,4,https://www.rl-raanana-2.co.il
+44,RL Modi'in 2,0293268945,4,https://www.rl-modiin-2.co.il
+45,RL Hadera 2,0282843849,1,https://www.rl-hadera-2.co.il
+46,RL Kfar Saba 2,0208653793,5,https://www.rl-kfar-saba-2.co.il
+47,RL Lod 2,0285765633,3,https://www.rl-lod-2.co.il
+48,RL Ramla 2,0259291701,4,https://www.rl-ramla-2.co.il
+49,RL Beit Shemesh 2,0288512225,5,https://www.rl-beit-shemesh-2.co.il
+50,RL Acre 2,0294320076,1,https://www.rl-acre-2.co.il
+51,RL Tiberias 2,0200594674,4,https://www.rl-tiberias-2.co.il
+52,RL Nazareth 2,0219206937,4,https://www.rl-nazareth-2.co.il
+53,RL Karmiel 2,0279122799,1,https://www.rl-karmiel-2.co.il
+54,RL Nahariya 2,0262317967,2,https://www.rl-nahariya-2.co.il
+55,RL Afula 2,0292738005,5,https://www.rl-afula-2.co.il
+56,RL Kiryat Gat 2,0298123939,1,https://www.rl-kiryat-gat-2.co.il
+57,RL Kiryat Shmona 2,0264812439,5,https://www.rl-kiryat-shmona-2.co.il
+58,RL Dimona 2,0252220487,4,https://www.rl-dimona-2.co.il
+59,RL Arad 2,0219712936,1,https://www.rl-arad-2.co.il
+60,RL Ashkelon 2,0203265369,1,https://www.rl-ashkelon-2.co.il
+61,RL Jerusalem 3,0257332359,5,https://www.rl-jerusalem-3.co.il
+62,RL Tel Aviv 3,0228772079,3,https://www.rl-tel-aviv-3.co.il
+63,RL Haifa 3,0205069156,3,https://www.rl-haifa-3.co.il
+64,RL Beersheba 3,0232365028,5,https://www.rl-beersheba-3.co.il
+65,RL Eilat 3,0225843116,3,https://www.rl-eilat-3.co.il
+66,RL Ashdod 3,0203244726,1,https://www.rl-ashdod-3.co.il
+67,RL Netanya 3,0265387821,3,https://www.rl-netanya-3.co.il
+68,RL Petah Tikva 3,0272715928,2,https://www.rl-petah-tikva-3.co.il
+69,RL Rishon LeZion 3,0278804534,1,https://www.rl-rishon-lezion-3.co.il
+70,RL Holon 3,0231424256,1,https://www.rl-holon-3.co.il
+71,RL Rehovot 3,0212350972,1,https://www.rl-rehovot-3.co.il
+72,RL Herzliya 3,0245508961,2,https://www.rl-herzliya-3.co.il
+73,RL Ra'anana 3,0274340109,5,https://www.rl-raanana-3.co.il
+74,RL Modi'in 3,0262479338,5,https://www.rl-modiin-3.co.il
+75,RL Hadera 3,0273134451,1,https://www.rl-hadera-3.co.il
+76,RL Kfar Saba 3,0238377824,2,https://www.rl-kfar-saba-3.co.il
+77,RL Lod 3,0232457714,4,https://www.rl-lod-3.co.il
+78,RL Ramla 3,0208548791,4,https://www.rl-ramla-3.co.il
+79,RL Beit Shemesh 3,0283670339,1,https://www.rl-beit-shemesh-3.co.il
+80,RL Acre 3,0266096577,3,https://www.rl-acre-3.co.il
+81,RL Tiberias 3,0231480717,2,https://www.rl-tiberias-3.co.il
+82,RL Nazareth 3,0251932735,3,https://www.rl-nazareth-3.co.il
+83,RL Karmiel 3,0282600250,3,https://www.rl-karmiel-3.co.il
+84,RL Nahariya 3,0211977701,4,https://www.rl-nahariya-3.co.il
+85,RL Afula 3,0278729794,5,https://www.rl-afula-3.co.il
+86,RL Kiryat Gat 3,0297548999,5,https://www.rl-kiryat-gat-3.co.il
+87,RL Kiryat Shmona 3,0224486259,3,https://www.rl-kiryat-shmona-3.co.il
+88,RL Dimona 3,0260308507,3,https://www.rl-dimona-3.co.il
+89,RL Arad 3,0297617587,4,https://www.rl-arad-3.co.il
+90,RL Ashkelon 3,0243326907,2,https://www.rl-ashkelon-3.co.il
+91,RL Jerusalem 4,0296796958,2,https://www.rl-jerusalem-4.co.il
+92,RL Tel Aviv 4,0217506632,2,https://www.rl-tel-aviv-4.co.il
+93,RL Haifa 4,0243864157,2,https://www.rl-haifa-4.co.il
+94,RL Beersheba 4,0285454724,3,https://www.rl-beersheba-4.co.il
+95,RL Eilat 4,0268695819,3,https://www.rl-eilat-4.co.il
+96,RL Ashdod 4,0200835810,4,https://www.rl-ashdod-4.co.il
+97,RL Netanya 4,0260397719,3,https://www.rl-netanya-4.co.il
+98,RL Petah Tikva 4,0230615101,5,https://www.rl-petah-tikva-4.co.il
+99,RL Rishon LeZion 4,0286983755,3,https://www.rl-rishon-lezion-4.co.il
+100,RL Holon 4,0271084067,1,https://www.rl-holon-4.co.il
+101,RL Rehovot 4,0228178750,2,https://www.rl-rehovot-4.co.il
+102,RL Herzliya 4,0282438817,5,https://www.rl-herzliya-4.co.il
+103,RL Ra'anana 4,0275911821,1,https://www.rl-raanana-4.co.il
+104,RL Modi'in 4,0275581628,1,https://www.rl-modiin-4.co.il
+105,RL Hadera 4,0241400616,3,https://www.rl-hadera-4.co.il
+106,RL Kfar Saba 4,0246868431,2,https://www.rl-kfar-saba-4.co.il
+107,RL Lod 4,0294860482,4,https://www.rl-lod-4.co.il
+108,RL Ramla 4,0233225817,2,https://www.rl-ramla-4.co.il
+109,RL Beit Shemesh 4,0266417584,4,https://www.rl-beit-shemesh-4.co.il
+110,RL Acre 4,0275966378,3,https://www.rl-acre-4.co.il
+111,RL Tiberias 4,0266428461,4,https://www.rl-tiberias-4.co.il
+112,RL Nazareth 4,0256106152,3,https://www.rl-nazareth-4.co.il
+113,RL Karmiel 4,0235472671,3,https://www.rl-karmiel-4.co.il
+114,RL Nahariya 4,0297375738,5,https://www.rl-nahariya-4.co.il
+115,RL Afula 4,0239942376,4,https://www.rl-afula-4.co.il
+116,RL Kiryat Gat 4,0229982066,1,https://www.rl-kiryat-gat-4.co.il
+117,RL Kiryat Shmona 4,0224373195,5,https://www.rl-kiryat-shmona-4.co.il
+118,RL Dimona 4,0246445893,5,https://www.rl-dimona-4.co.il
+119,RL Arad 4,0294082248,4,https://www.rl-arad-4.co.il
+120,RL Ashkelon 4,0284163023,3,https://www.rl-ashkelon-4.co.il
+121,RL Jerusalem 5,0243461321,3,https://www.rl-jerusalem-5.co.il
+122,RL Tel Aviv 5,0271803640,1,https://www.rl-tel-aviv-5.co.il
+123,RL Haifa 5,0245588021,5,https://www.rl-haifa-5.co.il
+124,RL Beersheba 5,0254125683,4,https://www.rl-beersheba-5.co.il
+125,RL Eilat 5,0274508394,5,https://www.rl-eilat-5.co.il
+126,RL Ashdod 5,0233437011,1,https://www.rl-ashdod-5.co.il
+127,RL Netanya 5,0250540040,2,https://www.rl-netanya-5.co.il
+128,RL Petah Tikva 5,0239346944,2,https://www.rl-petah-tikva-5.co.il
+129,RL Rishon LeZion 5,0250521868,1,https://www.rl-rishon-lezion-5.co.il
+130,RL Holon 5,0273865221,3,https://www.rl-holon-5.co.il
+131,RL Rehovot 5,0260274884,3,https://www.rl-rehovot-5.co.il
+132,RL Herzliya 5,0266133765,1,https://www.rl-herzliya-5.co.il
+133,RL Ra'anana 5,0215226126,3,https://www.rl-raanana-5.co.il
+134,RL Modi'in 5,0217458094,5,https://www.rl-modiin-5.co.il
+135,RL Hadera 5,0215595452,5,https://www.rl-hadera-5.co.il
+136,RL Kfar Saba 5,0274498180,2,https://www.rl-kfar-saba-5.co.il
+137,RL Lod 5,0233301381,3,https://www.rl-lod-5.co.il
+138,RL Ramla 5,0224394896,2,https://www.rl-ramla-5.co.il
+139,RL Beit Shemesh 5,0285014424,5,https://www.rl-beit-shemesh-5.co.il
+140,RL Acre 5,0211229115,5,https://www.rl-acre-5.co.il
+141,RL Tiberias 5,0205683962,1,https://www.rl-tiberias-5.co.il
+142,RL Nazareth 5,0210885918,3,https://www.rl-nazareth-5.co.il
+143,RL Karmiel 5,0293170365,3,https://www.rl-karmiel-5.co.il
+144,RL Nahariya 5,0296982610,2,https://www.rl-nahariya-5.co.il
+145,RL Afula 5,0274897148,4,https://www.rl-afula-5.co.il
+146,RL Kiryat Gat 5,0299998954,4,https://www.rl-kiryat-gat-5.co.il
+147,RL Kiryat Shmona 5,0262365444,3,https://www.rl-kiryat-shmona-5.co.il
+148,RL Dimona 5,0285340460,3,https://www.rl-dimona-5.co.il
+149,RL Arad 5,0255772725,4,https://www.rl-arad-5.co.il
+150,RL Ashkelon 5,0216386508,2,https://www.rl-ashkelon-5.co.il
+151,RL Jerusalem 6,0280795163,4,https://www.rl-jerusalem-6.co.il
+152,RL Tel Aviv 6,0235924427,3,https://www.rl-tel-aviv-6.co.il
+153,RL Haifa 6,0293432230,1,https://www.rl-haifa-6.co.il
+154,RL Beersheba 6,0264147245,4,https://www.rl-beersheba-6.co.il
+155,RL Eilat 6,0263890884,3,https://www.rl-eilat-6.co.il
+156,RL Ashdod 6,0200122864,4,https://www.rl-ashdod-6.co.il
+157,RL Netanya 6,0212712422,2,https://www.rl-netanya-6.co.il
+158,RL Petah Tikva 6,0227620080,5,https://www.rl-petah-tikva-6.co.il
+159,RL Rishon LeZion 6,0285213771,3,https://www.rl-rishon-lezion-6.co.il
+160,RL Holon 6,0242618224,4,https://www.rl-holon-6.co.il
+161,RL Rehovot 6,0290853244,3,https://www.rl-rehovot-6.co.il
+162,RL Herzliya 6,0264343879,2,https://www.rl-herzliya-6.co.il
+163,RL Ra'anana 6,0253225769,2,https://www.rl-raanana-6.co.il
+164,RL Modi'in 6,0286577335,5,https://www.rl-modiin-6.co.il
+165,RL Hadera 6,0201551573,3,https://www.rl-hadera-6.co.il
+166,RL Kfar Saba 6,0248050776,5,https://www.rl-kfar-saba-6.co.il
+167,RL Lod 6,0277299129,2,https://www.rl-lod-6.co.il
+168,RL Ramla 6,0275197542,2,https://www.rl-ramla-6.co.il
+169,RL Beit Shemesh 6,0232008407,5,https://www.rl-beit-shemesh-6.co.il
+170,RL Acre 6,0237152805,3,https://www.rl-acre-6.co.il
+171,RL Tiberias 6,0223895878,2,https://www.rl-tiberias-6.co.il
+172,RL Nazareth 6,0290227532,2,https://www.rl-nazareth-6.co.il
+173,RL Karmiel 6,0268383774,1,https://www.rl-karmiel-6.co.il
+174,RL Nahariya 6,0248847881,5,https://www.rl-nahariya-6.co.il
+175,RL Afula 6,0261774330,2,https://www.rl-afula-6.co.il
+176,RL Kiryat Gat 6,0275522752,5,https://www.rl-kiryat-gat-6.co.il
+177,RL Kiryat Shmona 6,0260497330,1,https://www.rl-kiryat-shmona-6.co.il
+178,RL Dimona 6,0276322314,1,https://www.rl-dimona-6.co.il
+179,RL Arad 6,0243843194,2,https://www.rl-arad-6.co.il
+180,RL Ashkelon 6,0273488101,1,https://www.rl-ashkelon-6.co.il
+181,RL Jerusalem 7,0241505282,4,https://www.rl-jerusalem-7.co.il
+182,RL Tel Aviv 7,0252275449,3,https://www.rl-tel-aviv-7.co.il
+183,RL Haifa 7,0223949989,4,https://www.rl-haifa-7.co.il
+184,RL Beersheba 7,0271190297,3,https://www.rl-beersheba-7.co.il
+185,RL Eilat 7,0299247471,5,https://www.rl-eilat-7.co.il
+186,RL Ashdod 7,0275247065,2,https://www.rl-ashdod-7.co.il
+187,RL Netanya 7,0226349822,1,https://www.rl-netanya-7.co.il
+188,RL Petah Tikva 7,0292242363,2,https://www.rl-petah-tikva-7.co.il
+189,RL Rishon LeZion 7,0298812382,5,https://www.rl-rishon-lezion-7.co.il
+190,RL Holon 7,0286859381,5,https://www.rl-holon-7.co.il
+191,RL Rehovot 7,0234764091,3,https://www.rl-rehovot-7.co.il
+192,RL Herzliya 7,0275431820,2,https://www.rl-herzliya-7.co.il
+193,RL Ra'anana 7,0260106189,2,https://www.rl-raanana-7.co.il
+194,RL Modi'in 7,0274768774,3,https://www.rl-modiin-7.co.il
+195,RL Hadera 7,0269882285,3,https://www.rl-hadera-7.co.il
+196,RL Kfar Saba 7,0235472155,5,https://www.rl-kfar-saba-7.co.il
+197,RL Lod 7,0217062673,4,https://www.rl-lod-7.co.il
+198,RL Ramla 7,0271186793,1,https://www.rl-ramla-7.co.il
+199,RL Beit Shemesh 7,0254209690,5,https://www.rl-beit-shemesh-7.co.il
+200,RL Acre 7,0202192079,4,https://www.rl-acre-7.co.il
+201,RL Tiberias 7,0281226284,4,https://www.rl-tiberias-7.co.il
+202,RL Nazareth 7,0265488486,4,https://www.rl-nazareth-7.co.il
+203,RL Karmiel 7,0219067585,4,https://www.rl-karmiel-7.co.il
+204,RL Nahariya 7,0203366299,2,https://www.rl-nahariya-7.co.il
+205,RL Afula 7,0297197558,5,https://www.rl-afula-7.co.il
+206,RL Kiryat Gat 7,0256305651,5,https://www.rl-kiryat-gat-7.co.il
+207,RL Kiryat Shmona 7,0217433579,3,https://www.rl-kiryat-shmona-7.co.il
+208,RL Dimona 7,0225556257,1,https://www.rl-dimona-7.co.il
+209,RL Arad 7,0234766398,1,https://www.rl-arad-7.co.il
+210,RL Ashkelon 7,0291328024,1,https://www.rl-ashkelon-7.co.il
+211,RL Jerusalem 8,0255463583,2,https://www.rl-jerusalem-8.co.il
+212,RL Tel Aviv 8,0241575530,1,https://www.rl-tel-aviv-8.co.il
+213,RL Haifa 8,0269960382,3,https://www.rl-haifa-8.co.il
+214,RL Beersheba 8,0209945829,1,https://www.rl-beersheba-8.co.il
+215,RL Eilat 8,0275062054,3,https://www.rl-eilat-8.co.il
+216,RL Ashdod 8,0272305291,4,https://www.rl-ashdod-8.co.il
+217,RL Netanya 8,0227866226,4,https://www.rl-netanya-8.co.il
+218,RL Petah Tikva 8,0266853575,1,https://www.rl-petah-tikva-8.co.il
+219,RL Rishon LeZion 8,0228193956,3,https://www.rl-rishon-lezion-8.co.il
+220,RL Holon 8,0267016510,5,https://www.rl-holon-8.co.il
+221,RL Rehovot 8,0202942707,4,https://www.rl-rehovot-8.co.il
+222,RL Herzliya 8,0269607450,3,https://www.rl-herzliya-8.co.il
+223,RL Ra'anana 8,0209852419,4,https://www.rl-raanana-8.co.il
+224,RL Modi'in 8,0278222710,3,https://www.rl-modiin-8.co.il
+225,RL Hadera 8,0261040121,4,https://www.rl-hadera-8.co.il
+226,RL Kfar Saba 8,0298349267,1,https://www.rl-kfar-saba-8.co.il
+227,RL Lod 8,0280574633,5,https://www.rl-lod-8.co.il
+228,RL Ramla 8,0262879439,3,https://www.rl-ramla-8.co.il
+229,RL Beit Shemesh 8,0213212937,4,https://www.rl-beit-shemesh-8.co.il
+230,RL Acre 8,0275132159,4,https://www.rl-acre-8.co.il
+231,RL Tiberias 8,0237558688,5,https://www.rl-tiberias-8.co.il
+232,RL Nazareth 8,0298100929,3,https://www.rl-nazareth-8.co.il
+233,RL Karmiel 8,0248316739,2,https://www.rl-karmiel-8.co.il
+234,RL Nahariya 8,0274975864,1,https://www.rl-nahariya-8.co.il
+235,RL Afula 8,0258327486,1,https://www.rl-afula-8.co.il
+236,RL Kiryat Gat 8,0222018530,3,https://www.rl-kiryat-gat-8.co.il
+237,RL Kiryat Shmona 8,0224781832,4,https://www.rl-kiryat-shmona-8.co.il
+238,RL Dimona 8,0283992438,2,https://www.rl-dimona-8.co.il
+239,RL Arad 8,0212067836,5,https://www.rl-arad-8.co.il
+240,RL Ashkelon 8,0208815413,4,https://www.rl-ashkelon-8.co.il
+241,RL Jerusalem 9,0299162361,2,https://www.rl-jerusalem-9.co.il
+242,RL Tel Aviv 9,0281322434,3,https://www.rl-tel-aviv-9.co.il
+243,RL Haifa 9,0227602756,3,https://www.rl-haifa-9.co.il
+244,RL Beersheba 9,0254339711,3,https://www.rl-beersheba-9.co.il
+245,RL Eilat 9,0223795836,2,https://www.rl-eilat-9.co.il
+246,RL Ashdod 9,0282029580,1,https://www.rl-ashdod-9.co.il
+247,RL Netanya 9,0213957318,2,https://www.rl-netanya-9.co.il
+248,RL Petah Tikva 9,0265885814,4,https://www.rl-petah-tikva-9.co.il
+249,RL Rishon LeZion 9,0201424237,1,https://www.rl-rishon-lezion-9.co.il
+250,RL Holon 9,0265713866,1,https://www.rl-holon-9.co.il
+251,RL Rehovot 9,0293923754,5,https://www.rl-rehovot-9.co.il
+252,RL Herzliya 9,0288119848,3,https://www.rl-herzliya-9.co.il
+253,RL Ra'anana 9,0263569188,4,https://www.rl-raanana-9.co.il
+254,RL Modi'in 9,0207239411,5,https://www.rl-modiin-9.co.il
+255,RL Hadera 9,0207447434,1,https://www.rl-hadera-9.co.il
+256,RL Kfar Saba 9,0229666316,1,https://www.rl-kfar-saba-9.co.il
+257,RL Lod 9,0210549265,5,https://www.rl-lod-9.co.il
+258,RL Ramla 9,0224172307,3,https://www.rl-ramla-9.co.il
+259,RL Beit Shemesh 9,0203074789,4,https://www.rl-beit-shemesh-9.co.il
+260,RL Acre 9,0279465890,1,https://www.rl-acre-9.co.il
+261,RL Tiberias 9,0261085788,2,https://www.rl-tiberias-9.co.il
+262,RL Nazareth 9,0241125088,4,https://www.rl-nazareth-9.co.il
+263,RL Karmiel 9,0248374663,4,https://www.rl-karmiel-9.co.il
+264,RL Nahariya 9,0262237892,1,https://www.rl-nahariya-9.co.il
+265,RL Afula 9,0250515430,2,https://www.rl-afula-9.co.il
+266,RL Kiryat Gat 9,0245379713,3,https://www.rl-kiryat-gat-9.co.il
+267,RL Kiryat Shmona 9,0217426848,4,https://www.rl-kiryat-shmona-9.co.il
+268,RL Dimona 9,0296372568,4,https://www.rl-dimona-9.co.il
+269,RL Arad 9,0273072019,5,https://www.rl-arad-9.co.il
+270,RL Ashkelon 9,0251257282,5,https://www.rl-ashkelon-9.co.il
+271,RL Jerusalem 10,0253307782,5,https://www.rl-jerusalem-10.co.il
+272,RL Tel Aviv 10,0223210927,4,https://www.rl-tel-aviv-10.co.il
+273,RL Haifa 10,0299769375,2,https://www.rl-haifa-10.co.il
+274,RL Beersheba 10,0259357024,2,https://www.rl-beersheba-10.co.il
+275,RL Eilat 10,0277477149,1,https://www.rl-eilat-10.co.il
+276,RL Ashdod 10,0230196582,5,https://www.rl-ashdod-10.co.il
+277,RL Netanya 10,0276920963,1,https://www.rl-netanya-10.co.il
+278,RL Petah Tikva 10,0285520611,4,https://www.rl-petah-tikva-10.co.il
+279,RL Rishon LeZion 10,0294900071,2,https://www.rl-rishon-lezion-10.co.il
+280,RL Holon 10,0216185349,2,https://www.rl-holon-10.co.il
+281,RL Rehovot 10,0202334460,1,https://www.rl-rehovot-10.co.il
+282,RL Herzliya 10,0202679092,4,https://www.rl-herzliya-10.co.il
+283,RL Ra'anana 10,0249974779,5,https://www.rl-raanana-10.co.il
+284,RL Modi'in 10,0285386102,1,https://www.rl-modiin-10.co.il
+285,RL Hadera 10,0232117881,3,https://www.rl-hadera-10.co.il
+286,RL Kfar Saba 10,0220110686,3,https://www.rl-kfar-saba-10.co.il
+287,RL Lod 10,0240017135,4,https://www.rl-lod-10.co.il
+288,RL Ramla 10,0269564659,3,https://www.rl-ramla-10.co.il
+289,RL Beit Shemesh 10,0274211015,5,https://www.rl-beit-shemesh-10.co.il
+290,RL Acre 10,0234545551,5,https://www.rl-acre-10.co.il
+291,RL Tiberias 10,0214131901,2,https://www.rl-tiberias-10.co.il
+292,RL Nazareth 10,0268732776,5,https://www.rl-nazareth-10.co.il
+293,RL Karmiel 10,0205259544,4,https://www.rl-karmiel-10.co.il
+294,RL Nahariya 10,0277855350,1,https://www.rl-nahariya-10.co.il
+295,RL Afula 10,0224842277,1,https://www.rl-afula-10.co.il
+296,RL Kiryat Gat 10,0226024023,5,https://www.rl-kiryat-gat-10.co.il
+297,RL Kiryat Shmona 10,0263350157,4,https://www.rl-kiryat-shmona-10.co.il
+298,RL Dimona 10,0253038021,1,https://www.rl-dimona-10.co.il
+299,RL Arad 10,0288932189,4,https://www.rl-arad-10.co.il
+300,RL Ashkelon 10,0298331138,5,https://www.rl-ashkelon-10.co.il

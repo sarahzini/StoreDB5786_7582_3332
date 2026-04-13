@@ -1,0 +1,119 @@
+CREATE TABLE PRODUCT
+(
+  ProductID INT NOT NULL,
+  ProductName VARCHAR(100) NOT NULL,
+  Price DECIMAL(10,2) NOT NULL CHECK (Price >= 0),
+  DateOfManufacture DATE NOT NULL,
+  ExpirationDate DATE NOT NULL,
+  PRIMARY KEY (ProductID),
+  CONSTRAINT check_dates CHECK (ExpirationDate >= DateOfManufacture)
+);
+
+CREATE TABLE WAREHOUSE
+(
+  WarehouseID INT NOT NULL,
+  Region VARCHAR(50) NOT NULL,
+  Address TEXT NOT NULL,
+  PRIMARY KEY (WarehouseID)
+);
+
+CREATE TABLE INVENTORY
+(
+  ProductID INT NOT NULL,
+  Quantity INT NOT NULL DEFAULT 0 CHECK (Quantity >= 0),
+  MinimumStock INT NOT NULL DEFAULT 5 CHECK (MinimumStock >= 0),
+  PRIMARY KEY (ProductID),
+  FOREIGN KEY (ProductID) REFERENCES PRODUCT(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE DELIVERYCOMPAGNY
+(
+  DeliveryCieID INT NOT NULL,
+  DeliveryCieName VARCHAR(100) NOT NULL,
+  DeliveryCiePhoneNb VARCHAR(20) NOT NULL,
+  Email VARCHAR(100) NOT NULL CHECK (Email LIKE '%@%'),
+  PRIMARY KEY (DeliveryCieID),
+  UNIQUE (DeliveryCieName),
+  UNIQUE (DeliveryCiePhoneNb)
+);
+
+CREATE TABLE TRUCK
+(
+  DriverID INT NOT NULL,
+  Active SMALLINT NOT NULL DEFAULT 1 CHECK (Active IN (0, 1)), -- 1 pour actif, 0 sinon
+  Capacity NUMERIC(10,2) NOT NULL CHECK (Capacity > 0),
+  LicensePlate VARCHAR(20) NOT NULL,
+  MaintenanceStatus VARCHAR(50) DEFAULT 'Good',
+  DeliveryCieID INT NOT NULL,
+  PRIMARY KEY (DriverID),
+  FOREIGN KEY (DeliveryCieID) REFERENCES DELIVERYCOMPAGNY(DeliveryCieID),
+  UNIQUE (LicensePlate)
+);
+
+CREATE TABLE STORE
+(
+  StoreID INT NOT NULL,
+  StoreName VARCHAR(100) NOT NULL,
+  Phone VARCHAR(20) NOT NULL,
+  Rating INT CHECK (Rating BETWEEN 1 AND 5),
+  WebSiteUrl TEXT,
+  PRIMARY KEY (StoreID)
+);
+
+CREATE TABLE "ORDER" -- Utilisation de guillemets car ORDER est un mot réservé SQL
+(
+  OrderId INT NOT NULL,
+  Price DECIMAL(10,2) NOT NULL CHECK (Price >= 0),
+  DeliveryDate TIMESTAMP,
+  OrderDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  StoreID INT NOT NULL,
+  DriverID INT NOT NULL,
+  PRIMARY KEY (OrderId),
+  FOREIGN KEY (StoreID) REFERENCES STORE(StoreID),
+  FOREIGN KEY (DriverID) REFERENCES TRUCK(DriverID)
+);
+
+CREATE TABLE LOCATED
+(
+  ProductID INT NOT NULL,
+  WarehouseID INT NOT NULL,
+  AisleNb INT NOT NULL CHECK (AisleNb > 0),
+  ShelfNb INT NOT NULL CHECK (ShelfNb > 0),
+  PRIMARY KEY (ProductID, WarehouseID),
+  FOREIGN KEY (ProductID) REFERENCES PRODUCT(ProductID),
+  FOREIGN KEY (WarehouseID) REFERENCES WAREHOUSE(WarehouseID)
+);
+
+CREATE TABLE CONTAINS
+(
+  OrderId INT NOT NULL,
+  ProductID INT NOT NULL,
+  Quantity INT NOT NULL DEFAULT 1 CHECK (Quantity > 0),
+  PRIMARY KEY (OrderId, ProductID),
+  FOREIGN KEY (OrderId) REFERENCES "ORDER"(OrderId) ON DELETE CASCADE,
+  FOREIGN KEY (ProductID) REFERENCES PRODUCT(ProductID)
+);
+
+CREATE TABLE PRODUCT_KASHRUT
+(
+  ProductID INT NOT NULL,
+  Kashrut VARCHAR(50) NOT NULL,
+  PRIMARY KEY (Kashrut, ProductID),
+  FOREIGN KEY (ProductID) REFERENCES PRODUCT(ProductID) ON DELETE CASCADE
+);
+
+CREATE TABLE WAREHOUSE_WAREHOUSEMANAGER
+(
+  WarehouseID INT NOT NULL,
+  WarehouseManager VARCHAR(100) NOT NULL,
+  PRIMARY KEY (WarehouseManager, WarehouseID),
+  FOREIGN KEY (WarehouseID) REFERENCES WAREHOUSE(WarehouseID) ON DELETE CASCADE
+);
+
+CREATE TABLE DELIVERYCOMPAGNY_REGIONSERVED
+(
+  DeliveryCieID INT NOT NULL,
+  RegionServed VARCHAR(50) NOT NULL,
+  PRIMARY KEY (RegionServed, DeliveryCieID),
+  FOREIGN KEY (DeliveryCieID) REFERENCES DELIVERYCOMPAGNY(DeliveryCieID) ON DELETE CASCADE
+);
