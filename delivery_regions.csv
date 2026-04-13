@@ -1,0 +1,328 @@
+DeliveryCieID,RegionServed
+1,Kfar Saba
+1,Herzliya
+1,Ramla
+2,Kiryat Shmona
+2,Lod
+3,Arad
+3,Tel Aviv
+3,Netanya
+3,Beit Shemesh
+4,Jerusalem
+4,Ra'anana
+4,Herzliya
+4,Afula
+4,Nahariya
+5,Ra'anana
+5,Kiryat Shmona
+5,Dimona
+6,Ashkelon
+7,Acre
+7,Kiryat Shmona
+7,Holon
+7,Netanya
+8,Kiryat Gat
+8,Tiberias
+8,Nazareth
+8,Ra'anana
+8,Beit Shemesh
+9,Kfar Saba
+9,Arad
+9,Nazareth
+10,Ra'anana
+10,Holon
+10,Dimona
+10,Acre
+11,Beit Shemesh
+11,Ashdod
+11,Jerusalem
+11,Herzliya
+11,Netanya
+12,Acre
+12,Haifa
+12,Afula
+12,Rishon LeZion
+12,Kiryat Gat
+13,Acre
+13,Netanya
+13,Ramla
+13,Kiryat Gat
+14,Ra'anana
+14,Rishon LeZion
+15,Eilat
+16,Petah Tikva
+16,Beit Shemesh
+17,Lod
+17,Kfar Saba
+17,Beersheba
+17,Kiryat Shmona
+17,Tiberias
+18,Haifa
+18,Ra'anana
+18,Nahariya
+18,Hadera
+18,Ashdod
+19,Lod
+19,Rehovot
+19,Haifa
+19,Beit Shemesh
+19,Kfar Saba
+20,Nazareth
+20,Netanya
+20,Kfar Saba
+20,Ra'anana
+21,Beit Shemesh
+22,Holon
+23,Ramla
+24,Holon
+24,Dimona
+24,Rishon LeZion
+24,Modi'in
+24,Nazareth
+25,Nahariya
+25,Ashdod
+25,Modi'in
+25,Beersheba
+26,Netanya
+26,Dimona
+26,Ramla
+27,Rishon LeZion
+27,Beit Shemesh
+27,Eilat
+27,Beersheba
+28,Petah Tikva
+28,Beit Shemesh
+28,Ramla
+28,Nahariya
+29,Herzliya
+29,Tiberias
+29,Ashkelon
+29,Karmiel
+30,Netanya
+30,Beit Shemesh
+30,Haifa
+30,Dimona
+30,Nahariya
+31,Lod
+31,Jerusalem
+31,Petah Tikva
+32,Haifa
+32,Jerusalem
+32,Rehovot
+33,Karmiel
+33,Kiryat Gat
+33,Herzliya
+34,Tel Aviv
+34,Netanya
+34,Modi'in
+34,Beersheba
+35,Dimona
+35,Haifa
+35,Petah Tikva
+36,Holon
+36,Ashdod
+36,Kfar Saba
+36,Tiberias
+36,Rehovot
+37,Acre
+37,Ramla
+38,Netanya
+38,Nahariya
+38,Haifa
+38,Petah Tikva
+38,Eilat
+39,Hadera
+40,Rishon LeZion
+40,Karmiel
+40,Dimona
+40,Tiberias
+40,Jerusalem
+41,Ra'anana
+42,Afula
+42,Tel Aviv
+42,Petah Tikva
+42,Modi'in
+42,Ra'anana
+43,Lod
+43,Ashdod
+43,Herzliya
+43,Karmiel
+43,Modi'in
+44,Jerusalem
+45,Petah Tikva
+45,Hadera
+46,Acre
+47,Tiberias
+47,Nahariya
+48,Hadera
+48,Beit Shemesh
+48,Netanya
+48,Ramla
+48,Herzliya
+49,Tiberias
+49,Petah Tikva
+49,Ashdod
+49,Afula
+50,Lod
+50,Jerusalem
+50,Afula
+50,Ramla
+51,Ashdod
+51,Petah Tikva
+51,Ashkelon
+52,Nahariya
+52,Kiryat Shmona
+52,Rishon LeZion
+52,Holon
+53,Kiryat Gat
+53,Ashkelon
+53,Jerusalem
+53,Haifa
+53,Tel Aviv
+54,Arad
+54,Kfar Saba
+55,Herzliya
+55,Rishon LeZion
+55,Haifa
+55,Kfar Saba
+55,Netanya
+56,Rehovot
+56,Netanya
+57,Tel Aviv
+58,Holon
+58,Lod
+58,Beersheba
+58,Herzliya
+59,Netanya
+60,Tel Aviv
+60,Rehovot
+60,Herzliya
+60,Rishon LeZion
+60,Kiryat Gat
+61,Beersheba
+62,Karmiel
+63,Beit Shemesh
+63,Tiberias
+63,Ra'anana
+63,Beersheba
+63,Kiryat Gat
+64,Netanya
+64,Beersheba
+64,Rehovot
+64,Modi'in
+64,Kiryat Shmona
+65,Rishon LeZion
+65,Haifa
+65,Lod
+66,Petah Tikva
+66,Ramla
+66,Nazareth
+66,Ashkelon
+67,Afula
+67,Ashkelon
+67,Arad
+68,Eilat
+68,Dimona
+68,Afula
+68,Arad
+68,Tel Aviv
+69,Arad
+69,Nazareth
+69,Ashdod
+70,Petah Tikva
+70,Kfar Saba
+70,Arad
+70,Ashkelon
+71,Lod
+71,Petah Tikva
+71,Rishon LeZion
+71,Beit Shemesh
+72,Beit Shemesh
+72,Lod
+72,Afula
+73,Kfar Saba
+73,Acre
+74,Haifa
+74,Herzliya
+74,Kiryat Shmona
+74,Netanya
+74,Modi'in
+75,Modi'in
+75,Lod
+75,Kiryat Gat
+75,Arad
+76,Lod
+76,Ashdod
+77,Petah Tikva
+78,Modi'in
+78,Haifa
+78,Ra'anana
+79,Beersheba
+80,Kfar Saba
+80,Petah Tikva
+80,Rehovot
+80,Ashkelon
+81,Beersheba
+81,Eilat
+82,Herzliya
+82,Lod
+82,Afula
+82,Beersheba
+82,Acre
+83,Lod
+83,Eilat
+83,Hadera
+84,Modi'in
+84,Rehovot
+84,Holon
+84,Haifa
+84,Nahariya
+85,Hadera
+85,Afula
+85,Rishon LeZion
+85,Nahariya
+86,Tel Aviv
+86,Ashdod
+86,Kiryat Gat
+86,Arad
+87,Netanya
+87,Ra'anana
+88,Kfar Saba
+88,Eilat
+88,Ra'anana
+88,Rishon LeZion
+88,Beersheba
+89,Tel Aviv
+90,Ramla
+90,Beit Shemesh
+90,Holon
+91,Jerusalem
+92,Ashdod
+93,Nahariya
+93,Ashkelon
+93,Arad
+93,Dimona
+93,Modi'in
+94,Tel Aviv
+94,Netanya
+94,Beersheba
+94,Karmiel
+94,Haifa
+95,Afula
+95,Nahariya
+95,Ramla
+95,Netanya
+96,Herzliya
+97,Modi'in
+97,Ramla
+97,Rehovot
+97,Beit Shemesh
+97,Nazareth
+98,Beersheba
+98,Acre
+98,Rishon LeZion
+98,Arad
+98,Nazareth
+99,Kiryat Shmona
+100,Nazareth
+100,Ra'anana

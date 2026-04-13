@@ -1,0 +1,276 @@
+DeliveryCieID,RegionServed
+1,Rishon LeZion
+2,Herzliya
+2,Arad
+2,Beit Shemesh
+3,Nahariya
+3,Arad
+4,Kiryat Gat
+4,Ra'anana
+4,Netanya
+5,Arad
+5,Afula
+5,Herzliya
+5,Haifa
+5,Hadera
+6,Ashkelon
+6,Lod
+7,Lod
+7,Beersheba
+7,Eilat
+7,Acre
+8,Hadera
+9,Nahariya
+9,Acre
+9,Tiberias
+9,Petah Tikva
+10,Kiryat Shmona
+10,Jerusalem
+11,Jerusalem
+11,Lod
+11,Nazareth
+11,Netanya
+12,Beit Shemesh
+13,Kiryat Shmona
+13,Holon
+14,Ramla
+14,Beit Shemesh
+15,Jerusalem
+15,Acre
+16,Beit Shemesh
+17,Rishon LeZion
+18,Jerusalem
+18,Beersheba
+18,Beit Shemesh
+18,Ramla
+19,Kiryat Gat
+19,Petah Tikva
+20,Beersheba
+20,Beit Shemesh
+20,Ashkelon
+21,Tiberias
+22,Ashdod
+22,Jerusalem
+22,Beersheba
+22,Rishon LeZion
+23,Kiryat Gat
+24,Arad
+24,Holon
+24,Kiryat Shmona
+24,Acre
+24,Ashdod
+25,Acre
+25,Jerusalem
+25,Beit Shemesh
+25,Kfar Saba
+25,Herzliya
+26,Tiberias
+26,Petah Tikva
+26,Ramla
+27,Kfar Saba
+27,Rehovot
+27,Rishon LeZion
+28,Kiryat Shmona
+29,Tiberias
+29,Netanya
+29,Acre
+30,Holon
+30,Jerusalem
+31,Acre
+31,Nazareth
+32,Jerusalem
+32,Ramla
+32,Acre
+33,Arad
+34,Arad
+34,Modi'in
+34,Beersheba
+35,Acre
+35,Rishon LeZion
+36,Beersheba
+36,Nahariya
+36,Dimona
+36,Kiryat Shmona
+36,Kiryat Gat
+37,Haifa
+37,Rehovot
+37,Rishon LeZion
+38,Acre
+38,Ra'anana
+38,Ramla
+39,Petah Tikva
+39,Kfar Saba
+39,Ashkelon
+39,Lod
+39,Kiryat Shmona
+40,Jerusalem
+40,Ashdod
+40,Rishon LeZion
+40,Hadera
+41,Karmiel
+41,Lod
+42,Hadera
+43,Ra'anana
+44,Netanya
+45,Modi'in
+45,Kiryat Shmona
+45,Ashkelon
+46,Tiberias
+46,Beersheba
+46,Dimona
+47,Arad
+47,Tel Aviv
+47,Nahariya
+48,Herzliya
+48,Arad
+48,Nazareth
+49,Ashkelon
+50,Karmiel
+50,Ashkelon
+50,Tel Aviv
+51,Nahariya
+51,Rishon LeZion
+51,Jerusalem
+52,Kiryat Shmona
+52,Nahariya
+52,Rehovot
+53,Lod
+53,Kfar Saba
+53,Nahariya
+54,Herzliya
+54,Tel Aviv
+54,Hadera
+55,Rishon LeZion
+55,Eilat
+55,Tiberias
+55,Modi'in
+55,Holon
+56,Kiryat Gat
+57,Nahariya
+57,Tel Aviv
+58,Rehovot
+58,Tiberias
+58,Nazareth
+59,Lod
+59,Ra'anana
+60,Arad
+61,Hadera
+62,Ra'anana
+62,Karmiel
+62,Jerusalem
+63,Kfar Saba
+64,Rehovot
+64,Petah Tikva
+65,Holon
+65,Tel Aviv
+65,Petah Tikva
+66,Petah Tikva
+66,Eilat
+66,Beersheba
+66,Jerusalem
+66,Rehovot
+67,Rishon LeZion
+67,Afula
+67,Kiryat Shmona
+67,Petah Tikva
+67,Nahariya
+68,Kiryat Gat
+68,Rishon LeZion
+69,Nazareth
+69,Rishon LeZion
+70,Karmiel
+70,Eilat
+70,Tiberias
+70,Lod
+71,Kiryat Shmona
+71,Modi'in
+71,Jerusalem
+71,Petah Tikva
+72,Haifa
+73,Nazareth
+73,Beit Shemesh
+73,Afula
+73,Beersheba
+73,Arad
+74,Ra'anana
+74,Afula
+74,Nazareth
+74,Herzliya
+74,Kiryat Shmona
+75,Eilat
+75,Rishon LeZion
+75,Nahariya
+76,Herzliya
+76,Lod
+76,Beersheba
+76,Kfar Saba
+76,Ramla
+77,Arad
+77,Rishon LeZion
+77,Beersheba
+77,Acre
+77,Hadera
+78,Kiryat Shmona
+78,Ashdod
+78,Holon
+78,Dimona
+78,Ramla
+79,Eilat
+79,Netanya
+79,Kiryat Shmona
+80,Eilat
+80,Ramla
+80,Rishon LeZion
+80,Tel Aviv
+80,Hadera
+81,Kfar Saba
+81,Rishon LeZion
+81,Dimona
+81,Afula
+81,Herzliya
+82,Beersheba
+82,Herzliya
+82,Kiryat Shmona
+82,Haifa
+83,Nazareth
+83,Haifa
+83,Arad
+83,Dimona
+83,Rehovot
+84,Lod
+84,Tel Aviv
+84,Beersheba
+84,Haifa
+85,Jerusalem
+86,Karmiel
+86,Rishon LeZion
+86,Hadera
+87,Kfar Saba
+87,Afula
+87,Herzliya
+87,Ashdod
+88,Ramla
+88,Nahariya
+89,Ra'anana
+89,Netanya
+90,Modi'in
+90,Afula
+91,Dimona
+92,Tel Aviv
+93,Haifa
+93,Ra'anana
+94,Nazareth
+95,Lod
+95,Hadera
+95,Modi'in
+95,Jerusalem
+95,Kiryat Gat
+96,Petah Tikva
+97,Dimona
+98,Netanya
+99,Haifa
+99,Holon
+99,Ramla
+100,Tel Aviv
+100,Ashdod
+100,Herzliya

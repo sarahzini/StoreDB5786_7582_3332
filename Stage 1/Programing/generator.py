@@ -48,5 +48,35 @@ def generate_store_data(file_name="stores.csv"):
     except Exception as e:
         print(f" An error occurred during file generation: {e}")
 
+def generate_delivery_regions(file_name="delivery_regions.csv"):
+    """
+    Generates a CSV file associating the 100 delivery companies 
+    with random regions.
+    """
+    try:
+        with open(file_name, mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            
+            # CSV Headers (matching your table columns)
+            writer.writerow(['DeliveryCieID', 'RegionServed'])
+            
+            # Loop through your 100 companies (DeliveryCieID from 1 to 100)
+            for company_id in range(1, 101):
+                
+                # Randomly choose how many regions this company will serve (e.g., between 1 and 5)
+                num_regions = random.randint(1, 5)
+                
+                # random.sample ensures there are no duplicate regions for the same delivery company
+                served_regions = random.sample(regions, k=num_regions)
+                
+                # Create a row for each region served by this company
+                for region in served_regions:
+                    writer.writerow([company_id, region])
+                    
+        print(f" Successfully generated {file_name}.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 if __name__ == "__main__":
     generate_store_data()
+    generate_delivery_regions()
