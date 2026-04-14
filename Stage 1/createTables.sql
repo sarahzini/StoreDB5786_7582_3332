@@ -40,7 +40,7 @@ CREATE TABLE DELIVERYCOMPAGNY
 CREATE TABLE TRUCK
 (
   DriverID INT NOT NULL,
-  Active SMALLINT NOT NULL DEFAULT 1 CHECK (Active IN (0, 1)), -- 1 pour actif, 0 sinon
+  Active SMALLINT NOT NULL DEFAULT 1 CHECK (Active IN (0, 1)), 
   Capacity NUMERIC(10,2) NOT NULL CHECK (Capacity > 0),
   LicensePlate VARCHAR(20) NOT NULL,
   MaintenanceStatus VARCHAR(50) DEFAULT 'Good',
@@ -60,7 +60,7 @@ CREATE TABLE STORE
   PRIMARY KEY (StoreID)
 );
 
-CREATE TABLE "ORDER" -- Utilisation de guillemets car ORDER est un mot réservé SQL
+CREATE TABLE "ORDER" 
 (
   OrderId INT NOT NULL,
   Price DECIMAL(10,2) NOT NULL CHECK (Price >= 0),
