@@ -41,9 +41,9 @@ The DSD details the physical schema, including primary/foreign keys and field co
 ![DSD Diagram](Stage%201/DSD.png)
 
 ### SQL Scripts
-- 📜 **[Create Tables](Stage%201/Programing/createTables.sql)**: Schema definition.
-- 📜 **[Drop Tables](Stage%201/Programing/dropTables.sql)**: Table cleanup script.
-- 📜 **[Select All](Stage%201/Programing/selectAll.sql)**: Data verification queries.
+- 📜 **[Create Tables](Stage%201/createTables.sql)**: Schema definition.
+- 📜 **[Drop Tables](Stage%201/dropTables.sql)**: Table cleanup script.
+- 📜 **[Select All](Stage%201/selectAll.sql)**: Data verification queries.
 
 ---
 
@@ -52,7 +52,7 @@ We utilized three distinct strategies to populate the database with over 2,000 r
 
 #### 1. Manual CSV Import
 Static reference data, such as warehouse locations and fixed regional codes, were imported via standard CSV files.
-- 📂 **[Browse Import Files](Stage%201/DataImportFiles/)**
+- 📂 **[Data Import Files](Stage%201/DataImportFiles/)**
 
 #### 2. Automated Python Generation
 For dynamic entities requiring specific logic (like unique store IDs or formatted phone numbers starting with "02"), we used Python scripts. This allowed for the generation of 300+ unique stores with professional naming conventions.
