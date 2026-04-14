@@ -34,11 +34,11 @@ The **Logistics Management System** is designed to efficiently manage the comple
 
 ### ERD (Entity-Relationship Diagram)
 The ERD illustrates the logical architecture of the database, showing how Stores, Warehouses, and Trucks interact.
-![ERD Diagram](Stage%201/Programing/ERD.png)
+![ERD Diagram](Stage%201/ERD.png)
 
 ### DSD (Data Structure Diagram)
 The DSD details the physical schema, including primary/foreign keys and field constraints.
-![DSD Diagram](Stage%201/Programing/DSD.png)
+![DSD Diagram](Stage%201/DSD.png)
 
 ### SQL Scripts
 - 📜 **[Create Tables](Stage%201/Programing/createTables.sql)**: Schema definition.
