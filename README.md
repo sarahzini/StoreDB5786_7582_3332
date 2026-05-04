@@ -506,7 +506,7 @@ WHERE Kashrut = 'OU';
 ```
 **Result (Before & Execution / After):**  
 ![Before](images/Stage%202/DeleteK1.png)  
-![Execution](images/Stage%202/DeleteK2.png)
+![Execution](images/Stage%202/DeleteK3.png)
 ![After](images/Stage%202/Deletek2.png)
 
 
