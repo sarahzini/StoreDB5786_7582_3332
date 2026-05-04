@@ -464,6 +464,4 @@ CREATE INDEX idx_store_rating ON STORE(Rating);
 ### 7. Backup
 An updated backup file encompassing all Phase 2 modifications (new table states, constraints, indexes, and test data) has been generated.
 
-💾 **Phase 2 Database Backup File:** `Backup2` (Uploaded in Git)
-
-![Backup File Screenshot](images/Stage%202/Backup2.png)
+💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2)
