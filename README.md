@@ -492,7 +492,8 @@ DELETE FROM "ORDER"
 WHERE OrderDate < '2025-01-01'
 AND OrderId NOT IN (SELECT OrderId FROM CONTAINS);
 ```
-**Result (Execution / After):**  
+**Result (Execution / After):** 
+ ![Before](images/Stage%202/DeleteOrder1.png) 
 ![Execution](images/Stage%202/DeleteOrder2.png)  
 ![After](images/Stage%202/DeleteOrder3.png)
 
@@ -505,6 +506,7 @@ WHERE Kashrut = 'OU';
 ```
 **Result (Before & Execution / After):**  
 ![Before](images/Stage%202/DeleteK1.png)  
+![Execution](images/Stage%202/DeleteK2.png)
 ![After](images/Stage%202/Deletek2.png)
 
 
