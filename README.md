@@ -391,8 +391,8 @@ COMMIT;
 
 ### 3. UPDATE Queries
 
-**1. Price Adjustment by Kashrut Category:**
-Increases the unit price by 10% for all products carrying the 'Badatz' Kashrut status.
+**1. Restock Based on Minimum:**
+**Description:** Adding 100 units to the inventory for all products that have fallen below their minimum stock threshold.
 ```sql
 UPDATE INVENTORY
 SET Quantity = Quantity + 100
@@ -404,8 +404,8 @@ WHERE Quantity < MinimumStock;
 ![After](images/Stage%202/InventoryUpdate3.png)
 
 
-**2. Deactivating Idle Trucks:**
-Sets Active = 0 for any truck/driver that hasn't processed an order in the last 30 days.
+**2. Truck Maintenance Status:**
+**Description:** Updating the maintenance status to 'Required' for drivers/trucks that have completed more than 50 orders.
 ```sql
 UPDATE TRUCK
 SET MaintenanceStatus = 'Required'
@@ -422,8 +422,8 @@ WHERE DriverID IN (
 ![After](images/Stage%202/DriverUpdate3.png)
 
 
-**3. Updating Inventory Levels:**
-Adjusts stock levels in the inventory table based on recent deliveries or audits.
+**3. Seasonal Discount:**
+**Description:** Applying a 10% price reduction to products manufactured before 2024 to encourage sales.
 ```sql
 UPDATE PRODUCT
 SET Price = Price * 0.9
@@ -439,8 +439,20 @@ WHERE DateOfManufacture < '2024-01-01';
 
 ### 4. DELETE Queries
 
-**1. Purging Old Expired Inventory History:**
-Deletes records of products that expired more than a year ago to keep the database lightweight.
+**1. Remove Old Empty Orders:**
+**Description:** Deleting orders from previous years that do not contain any items (to clean up the system).
+```sql
+DELETE FROM "ORDER"
+WHERE OrderDate < '2025-01-01'
+AND OrderId NOT IN (SELECT OrderId FROM CONTAINS);
+```
+**Result (Execution / After):**  
+![Execution](images/Stage%202/DeleteOrder2.png)  
+![After](images/Stage%202/DeleteOrder3.png)
+
+
+**2. Remove an unused or specific Kashrut certification:**
+**Description:** Removing a kashrut type that is no longer supported or needed.
 ```sql
 DELETE FROM PRODUCT_KASHRUT 
 WHERE Kashrut = 'OU';
@@ -450,8 +462,8 @@ WHERE Kashrut = 'OU';
 ![After](images/Stage%202/Deletek2.png)
 
 
-**2. Removing Defunct Delivery Companies' Trucks:**
-Removes inactive trucks belonging to a delivery company that is no longer contracted.
+**3. Remove Inactive Trucks with No Order History:**
+**Description:** Deleting trucks/drivers that are marked as inactive and have never been assigned to any order to keep the fleet database clean.
 ```sql
 DELETE FROM TRUCK
 WHERE Active = 0 
@@ -461,16 +473,6 @@ AND DriverID NOT IN (SELECT DriverID FROM "ORDER");
 ![Before](images/Stage%202/DeleteTruck1.png)  
 ![Execution](images/Stage%202/DeleteTruck2.png)  
 ![After](images/Stage%202/DeleteTruck3.png)
-
-
-**3. Cleaning Up Empty Orders:**
-Deletes order headers that have no corresponding items in the CONTAIN table (orphaned records).
-```sql
-DELETE FROM "ORDER" WHERE OrderId NOT IN (SELECT OrderId FROM CONTAIN);
-```
-**Result (Execution / After):**  
-![Execution](images/Stage%202/DeleteOrder2.png)  
-![After](images/Stage%202/DeleteOrder3.png)
 
 
 ---
@@ -534,7 +536,5 @@ CREATE INDEX idx_store_rating ON STORE(Rating);
 
 ### 7. Backup
 An updated backup file encompassing all Phase 2 modifications (new table states, constraints, indexes, and test data) has been generated.
-
-💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2)
 
 💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2)
