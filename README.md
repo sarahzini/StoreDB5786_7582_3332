@@ -83,26 +83,21 @@ We successfully performed a database restore to verify data persistence. The ima
 
 ---
 
-## Phase 2: Queries and Constraints
+Phase 2: Queries and Constraints
+Phase 2 Introduction
+In this phase, we query the database to extract meaningful insights and enforce business rules through constraints and indexes.
 
-### Phase 2 Introduction
-In this phase, we query the database to extract meaningful insights and enforce business rules through constraints and indexes. 
+All SQL query files for this phase can be found in the designated code directory: Queries Folder.
 
-**Important Note:** A large portion of our database constraints (Primary Keys, Foreign Keys, NOT NULL, and basic checks) were already comprehensively defined during the table creation phase. Therefore, the new constraints added in this phase via `ALTER TABLE` are specifically targeted at advanced business rules. You can view our extensive initial setup here: [createTables.sql](Stage%201/createTables.sql).
+1. SELECT Queries
+Double Versions (Comparing Efficiency: A vs B)
+Query 1: Products Below Minimum Stock
 
-All SQL query files for this phase can be found in the designated code directory: [Queries Folder](Stage%202/Queries/).
+Description: A global report identifying all products currently below their minimum stock threshold across all company warehouses.
 
----
+Version A (JOIN):
 
-### 1. SELECT Queries
-
-#### Double Versions (Comparing Efficiency: A vs B)
-
-**Query 1: Products Below Minimum Stock**
-- **Description:** A global report identifying all products currently below their minimum stock threshold across all company warehouses.
-
-**Version A (JOIN):** 
-```sql
+SQL
 SELECT p.ProductName, w.WarehouseName, i.StockLevel, p.MinStockThreshold
 FROM PRODUCT p
 JOIN INVENTORY i ON p.ProductID = i.ProductID
@@ -288,83 +283,77 @@ Execution & Result:
 
 2. COMMIT & ROLLBACK
 Rollback Example
-
 Scenario: We mistakenly update the capacity of all active trucks. We view the incorrect state, then issue a ROLLBACK to revert the database to its previous state.
 
 SQL
 BEGIN;
 UPDATE TRUCK SET Capacity = Capacity + 10 WHERE Active = 1;
--- [Screenshot DB State After Update]
+-- [View DB State]
 ROLLBACK;
--- [Screenshot DB State After Rollback - Data reverted]
-DB State After Update:
+-- [Data reverted]
+Execution Process:
 
-DB State After Rollback:
+State Before/During Update:
+
+State After Rollback:
 
 Commit Example
-
 Scenario: We officially register a new truck into the fleet and permanently save the transaction using COMMIT.
 
 SQL
 BEGIN;
 INSERT INTO TRUCK (DriverID, DeliveryCieID, Capacity, Active) VALUES (999, 1, 50, 1);
 COMMIT;
--- [Screenshot DB State After Commit]
 DB State After Commit:
 
 3. UPDATE Queries
 1. Price Adjustment by Kashrut Category:
-
 Increases the unit price by 10% for all products carrying the 'Badatz' Kashrut status.
 
 SQL
 UPDATE PRODUCT SET UnitPrice = UnitPrice * 1.10 WHERE KashrutStatus = 'Badatz';
-Result (Before/After):
+Result (Before / Execution / After):
 
 2. Deactivating Idle Trucks:
-
 Sets Active = 0 for any truck/driver that hasn't processed an order in the last 30 days.
 
 SQL
 UPDATE TRUCK SET Active = 0 
 WHERE DriverID NOT IN (SELECT DriverID FROM "ORDER" WHERE OrderDate >= CURRENT_DATE - INTERVAL '30 days');
-Result (Before/After):
+Result (Before / Execution / After):
 
 3. Updating Inventory Levels:
-
 Adjusts stock levels in the inventory table based on recent deliveries or audits.
 
 SQL
--- Example Update Statement
 UPDATE INVENTORY SET StockLevel = StockLevel + 50 WHERE ProductID = 101 AND WarehouseID = 1;
-Result (Before/After):
+Result (Before / Execution / After):
 
 4. DELETE Queries
 1. Purging Old Expired Inventory History:
-
 Deletes records of products that expired more than a year ago to keep the database lightweight.
 
 SQL
 DELETE FROM PRODUCT WHERE ExpirationDate < CURRENT_DATE - INTERVAL '1 year';
-Result (Before/After):
+Result (Before & Execution / After):
 
 2. Removing Defunct Delivery Companies' Trucks:
-
-Removes inactive trucks belonging to a delivery company that is no longer contracted (e.g., ID 99).
+Removes inactive trucks belonging to a delivery company that is no longer contracted.
 
 SQL
 DELETE FROM TRUCK WHERE Active = 0 AND DeliveryCieID = 99; 
-Result (Before/After):
+Result (Before / Execution / After):
 
 3. Cleaning Up Empty Orders:
-
 Deletes order headers that have no corresponding items in the CONTAIN table (orphaned records).
 
 SQL
 DELETE FROM "ORDER" WHERE OrderId NOT IN (SELECT OrderId FROM CONTAIN);
-Result (Before/After):
+Result (Execution / After):
 
 5. Constraints (ALTER TABLE)
+🚨 Important Note: A significant portion of our database constraints (Primary Keys, Foreign Keys, NOT NULL, and basic checks) were already thoroughly defined directly during the table creation phase. Because of this solid foundation, the new constraints added here via ALTER TABLE are specifically targeted at advanced business rules, keeping them simple and effective. You can view our extensive initial constraint setup in our original script: createTables.sql.
+
 1. Order Price Validation:
 
 Description: Ensures an order cannot be logged with a negative price or a price of zero.
@@ -413,4 +402,4 @@ After:
 7. Backup
 An updated backup file encompassing all Phase 2 modifications (new table states, constraints, indexes, and test data) has been generated.
 
-💾 Phase 2 Database Backup File
+💾 Phase 2 Database Backup File: backup2.sql (Uploaded in Git)
