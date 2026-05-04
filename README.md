@@ -69,7 +69,7 @@ For dynamic entities requiring specific logic (like unique store IDs or formatte
 #### 3. Mockaroo (Synthetic Data)
 To simulate a high volume of transactions and products, we used [Mockaroo](https://www.mockaroo.com/). This was essential for populating the `PRODUCT` and `CONTAINS` tables with valid dates and price ranges.
 
-![Mockaroo Setup](images/Mockaroo.png)
+![Mockaroo Setup](images/Stage1/Mockaroo.png)
 
 ---
 
@@ -79,7 +79,7 @@ Data safety is guaranteed through a complete SQL dump of the database.
 
 We successfully performed a database restore to verify data persistence. The image below confirms the `contains` table was fully recovered in the pgAdmin environment:
 
-![Restore Confirmation](images/Restore.png)
+![Restore Confirmation](images/Stage1/Restore.png)
 
 ---
 
