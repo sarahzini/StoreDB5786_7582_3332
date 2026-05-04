@@ -81,6 +81,8 @@ We successfully performed a database restore to verify data persistence. The ima
 
 ![Restore Confirmation](images/Stage1/Restore.png)
 
+
+
 ---
 
 ## Phase 2: Queries and Constraints
@@ -97,37 +99,54 @@ All SQL query files for this phase can be found in the designated code directory
 #### Double Versions (Comparing Efficiency: A vs B)
 
 **Query 1: Products Below Minimum Stock**
-- **Description:** A global report identifying all products currently below their minimum stock threshold across all company warehouses.
+- **Description:** Provide a global report of all products currently below their minimum stock threshold across all company warehouses.
 
-**Version A (JOIN):** 
+**Version A (Multiple JOINs):** 
 ```sql
-SELECT p.ProductName, w.WarehouseName, i.StockLevel, p.MinStockThreshold
+-- This scans all warehouses and links products to their current stock status.
+SELECT 
+    w.WarehouseID, 
+    w.Region AS WarehouseName, 
+    p.ProductName, 
+    i.Quantity, 
+    i.MinimumStock
 FROM PRODUCT p
 JOIN INVENTORY i ON p.ProductID = i.ProductID
-JOIN WAREHOUSE w ON i.WarehouseID = w.WarehouseID
-WHERE i.StockLevel < p.MinStockThreshold;
+JOIN LOCATED l ON p.ProductID = l.ProductID
+JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
+WHERE i.Quantity < i.MinimumStock
+ORDER BY w.WarehouseID, p.ProductName; -- Organized by warehouse for clarity
 ```
 
-**Version B (Subquery):**
+**Version B (Subqueries):**
 ```sql
-SELECT p.ProductName,
-       (SELECT w.WarehouseName FROM WAREHOUSE w WHERE w.WarehouseID = i.WarehouseID) as WarehouseName,
-       i.StockLevel, p.MinStockThreshold
-FROM PRODUCT p, INVENTORY i
-WHERE p.ProductID = i.ProductID AND i.StockLevel < p.MinStockThreshold;
+-- This calculates stock and warehouse names for each product individually.
+SELECT 
+    l.WarehouseID,
+    (SELECT Region FROM WAREHOUSE WHERE WarehouseID = l.WarehouseID) AS WarehouseName,
+    p.ProductName,
+    (SELECT Quantity FROM INVENTORY WHERE ProductID = p.ProductID) AS Qty,
+    (SELECT MinimumStock FROM INVENTORY WHERE ProductID = p.ProductID) AS MinStock
+FROM PRODUCT p
+JOIN LOCATED l ON p.ProductID = l.ProductID
+WHERE p.ProductID IN (
+      SELECT ProductID FROM INVENTORY WHERE Quantity < MinimumStock
+)
+ORDER BY l.WarehouseID;
 ```
-**Comparison (Why Version A is better):** Version A uses a standard JOIN to build a single result set, allowing the database engine to utilize indexes efficiently in one pass. Version B relies on a correlated subquery in the SELECT clause, forcing a row-by-row lookup for the warehouse name for every matching product. This makes Version A significantly more efficient and the preferred method in a professional environment.
+**Comparison (Why Version A is better):** Version A uses standard JOINs to build a single result set, allowing the database engine to utilize indexes efficiently in one pass. Version B relies on multiple correlated subqueries in the SELECT clause, forcing a repetitive row-by-row lookup. This makes Version A significantly more efficient and the professional choice.
 
 **Execution & Result:**  
 ![Query 1 Result](images/Stage%202/Query1.png)
 
 
 **Query 2: Delivery Performance by Company**
-- **Description:** Analyzes the logistical efficiency and financial volume handled by different delivery companies within the current month (active deliveries, order volume, total monetary value).
+- **Description:** Analyzes the delivery performance and financial volume handled by different delivery companies within the current month.
 
-**Version A (Standard Aggregation):**
+**Version A (Direct Grouping):**
 ```sql
-SELECT dc.DeliveryCieName, COUNT(o.OrderId) as TotalDeliveries, SUM(o.Price) as TotalVolume
+-- Direct grouping after join
+SELECT dc.DeliveryCieName, COUNT(o.OrderId) as TotalOrders, SUM(o.Price) as TotalValue
 FROM DELIVERYCOMPAGNY dc
 JOIN TRUCK t ON dc.DeliveryCieID = t.DeliveryCieID
 JOIN "ORDER" o ON t.DriverID = o.DriverID
@@ -137,60 +156,75 @@ GROUP BY dc.DeliveryCieName;
 
 **Version B (CTE):**
 ```sql
+-- Breaking down steps for clarity
 WITH MonthlyOrders AS (
-    SELECT t.DeliveryCieID, o.OrderId, o.Price
-    FROM "ORDER" o
-    JOIN TRUCK t ON o.DriverID = t.DriverID
-    WHERE EXTRACT(MONTH FROM o.OrderDate) = EXTRACT(MONTH FROM CURRENT_DATE)
+    SELECT DriverID, OrderId, Price 
+    FROM "ORDER" 
+    WHERE EXTRACT(MONTH FROM OrderDate) = EXTRACT(MONTH FROM CURRENT_DATE)
 )
-SELECT dc.DeliveryCieName, COUNT(mo.OrderId) as TotalDeliveries, SUM(mo.Price) as TotalVolume
+SELECT dc.DeliveryCieName, COUNT(mo.OrderId), SUM(mo.Price)
 FROM DELIVERYCOMPAGNY dc
-JOIN MonthlyOrders mo ON dc.DeliveryCieID = mo.DeliveryCieID
+JOIN TRUCK t ON dc.DeliveryCieID = t.DeliveryCieID
+JOIN MonthlyOrders mo ON t.DriverID = mo.DriverID
 GROUP BY dc.DeliveryCieName;
 ```
-**Comparison (When to use which):** For this specific, straightforward aggregation, Version A is generally slightly faster. Modern query optimizers handle simple JOIN and GROUP BY operations extremely well. However, Version B introduces a Common Table Expression (CTE). While slightly heavier here, this method becomes vastly more efficient if the logic defining MonthlyOrders needs to be referenced multiple times within a much larger, complex script, preventing redundant processing.
+**Comparison (When to use which):** For this specific, straightforward aggregation, Version A is generally faster. Modern query optimizers handle simple JOIN and GROUP BY operations extremely well. However, Version B introduces a Common Table Expression (CTE). While slightly heavier here, this method becomes vastly more efficient if the logic defining `MonthlyOrders` needs to be reused multiple times within a much larger, complex script.
 
 **Execution & Result:**  
 ![Query 2 Result](images/Stage%202/Query2.png)
 
 
 **Query 3: Premium Stores Analysis**
-- **Description:** Identifies "Premium Stores" (Customer Rating of 4-5) whose average order value exceeds the company-wide average order value.
+- **Description:** Identifies high-rated stores (Rating >= 4) whose average order value exceeds the company-wide average to highlight top-performing locations.
 
 **Version A (HAVING + Subquery):**
 ```sql
-SELECT s.StoreID, s.StoreName, AVG(o.Price) as AvgOrderValue
+-- This is efficient because it groups data first and compares the aggregate.
+SELECT 
+    s.StoreID, 
+    s.StoreName, 
+    s.Rating, 
+    ROUND(AVG(o.Price), 2) AS Store_Avg_Order
 FROM STORE s
 JOIN "ORDER" o ON s.StoreID = o.StoreID
 WHERE s.Rating >= 4
-GROUP BY s.StoreID, s.StoreName
-HAVING AVG(o.Price) > (SELECT AVG(Price) FROM "ORDER");
+GROUP BY s.StoreID, s.StoreName, s.Rating
+HAVING AVG(o.Price) > (SELECT AVG(Price) FROM "ORDER") -- Comparing vs Global Average
+ORDER BY Store_Avg_Order DESC;
 ```
 
 **Version B (Correlated Subqueries):**
 ```sql
-SELECT s.StoreID, s.StoreName, 
-       (SELECT AVG(Price) FROM "ORDER" o2 WHERE o2.StoreID = s.StoreID) as AvgOrderValue
+-- More complex structure but less efficient due to repeated executions.
+SELECT 
+    s.StoreName, 
+    s.Rating,
+    (SELECT ROUND(AVG(Price), 2) FROM "ORDER" WHERE StoreID = s.StoreID) AS Avg_Order
 FROM STORE s
-WHERE s.Rating >= 4 AND 
-      (SELECT AVG(Price) FROM "ORDER" o2 WHERE o2.StoreID = s.StoreID) > (SELECT AVG(Price) FROM "ORDER");
+WHERE s.Rating >= 4 
+AND (SELECT AVG(Price) FROM "ORDER" WHERE StoreID = s.StoreID) > 
+    (SELECT AVG(Price) FROM "ORDER"); -- Nested comparison
 ```
-**Comparison (Why Version A is better):** Version A is vastly superior in performance. It calculates the company-wide average exactly once, then groups the remaining results. Version B utilizes highly inefficient correlated subqueries. It forces the database to recalculate the average order value for every single store in the table twice (once for display, once for comparison). Version A is the professional choice.
+**Comparison (Why Version A is better):** Version A is vastly superior in performance. It groups the data first and calculates the company-wide average exactly once. Version B utilizes highly inefficient correlated subqueries, forcing the database to recalculate the average order value for every single store multiple times. 
 
 **Execution & Result:**  
 ![Query 3 Result](images/Stage%202/Query3.png)
 
 
 **Query 4: Expiring Products Breakdown (2026)**
-- **Description:** Displays products expiring in 2026, strictly breaking down the date into Day, Month, and Year to allow for granular logistical planning.
+- **Description:** Decomposes the expiration date into separate year, month, and day fields for products expiring in 2026, comparing two filtering methods to demonstrate SQL performance optimization.
 
 **Version A (Non-SARGable):**
 ```sql
-SELECT p.ProductName, w.Region,
+/* Version A: Extracting parts individually for the SELECT 
+   and using EXTRACT in the WHERE clause (Less efficient). */
+SELECT 
+    p.ProductName, 
+    w.Region,
     EXTRACT(YEAR FROM p.ExpirationDate) as ExpYear,
     EXTRACT(MONTH FROM p.ExpirationDate) as ExpMonth,
     EXTRACT(DAY FROM p.ExpirationDate) as ExpDay,
-    p.ExpirationDate
+    p.ExpirationDate -- Kept for visual reference
 FROM PRODUCT p
 JOIN LOCATED l ON p.ProductID = l.ProductID
 JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
@@ -200,7 +234,11 @@ ORDER BY ExpMonth ASC, ExpDay ASC;
 
 **Version B (SARGable):**
 ```sql
-SELECT p.ProductName, w.Region,
+/* Version B: Extracting parts individually for the SELECT 
+   but using a range for the WHERE clause (More efficient/SARGable). */
+SELECT 
+    p.ProductName, 
+    w.Region,
     EXTRACT(YEAR FROM p.ExpirationDate) as ExpYear,
     EXTRACT(MONTH FROM p.ExpirationDate) as ExpMonth,
     EXTRACT(DAY FROM p.ExpirationDate) as ExpDay,
@@ -211,7 +249,7 @@ JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
 WHERE p.ExpirationDate BETWEEN '2026-01-01' AND '2026-12-31'
 ORDER BY p.ExpirationDate;
 ```
-**Comparison (Why Version B is better):** Version B is significantly more efficient because its WHERE clause is "SARGable" (Search Argument Able). By using BETWEEN with static date limits, the database optimizer can utilize a B-Tree index on ExpirationDate. Version A applies the EXTRACT() function directly to the column within the WHERE clause, rendering the query Non-SARGable. This forces a slow, full table scan because the engine must calculate the year for every row before it can filter them.
+**Comparison (Why Version B is better):** Version B is significantly more efficient because its WHERE clause is "SARGable" (Search Argument Able). By using BETWEEN with static date limits, the database optimizer can utilize an index on `ExpirationDate`. Version A applies the `EXTRACT()` function directly to the column within the WHERE clause, forcing a slow, full table scan because the engine must calculate the year for every row before filtering.
 
 **Execution & Result:**  
 ![Query 4 Result](images/Stage%202/Query4.png)
@@ -220,20 +258,27 @@ ORDER BY p.ExpirationDate;
 #### Single Versions (Complex Queries)
 
 **Query 5: Full Order Breakdown**
-- **Description:** Displays the full product breakdown, Kashrut status, and total price per line for a specific order. *(Note: We deliberately added deeper mock data to the CONTAIN table to yield richer, more interesting results for this query).*
+- **Description:** Retrieves all products within a specific order with detailed attributes (including Kashrut certification and line total).
 ```sql
-SELECT p.ProductName, p.KashrutStatus, c.Quantity, (c.Quantity * p.UnitPrice) as TotalLinePrice
+SELECT 
+    o.OrderId, 
+    p.ProductName, 
+    pk.Kashrut, 
+    c.Quantity, 
+    (c.Quantity * p.Price) as LineTotal
 FROM "ORDER" o
-JOIN CONTAIN c ON o.OrderId = c.OrderId
+JOIN CONTAINS c ON o.OrderId = c.OrderId
 JOIN PRODUCT p ON c.ProductID = p.ProductID
-WHERE o.OrderId = 1001;
+JOIN PRODUCT_KASHRUT pk ON p.ProductID = pk.ProductID
+WHERE o.OrderId = 3 
+ORDER BY p.ProductName;
 ```
 **Execution & Result:**  
 ![Query 5 Result](images/Stage%202/Query5.png)
 
 
 **Query 6: Driver Workload Summary**
-- **Description:** Provides a summary for each driver: Name, Delivery Company, and the total count of successfully delivered orders (DeliveryDate IS NOT NULL).
+- **Description:** Summarizes the delivery performance of each driver by displaying their name, company, and total count of successfully completed orders.
 ```sql
 SELECT t.DriverID, dc.DeliveryCieName, COUNT(o.OrderId) as DeliveredCount
 FROM TRUCK t
@@ -248,18 +293,22 @@ HAVING COUNT(o.OrderId) > 0;
 
 
 **Query 7: Available Drivers by Current Capacity**
-- **Description:** Displays all active drivers who have not yet reached their maximum delivery capacity (based on pending orders).
-- **Logic:** This is perfect for a Dispatcher GUI. We modified the database logic to use a LEFT JOIN between TRUCK and ORDER. This is crucial to see drivers even if they currently have 0 active orders. `o.DeliveryDate IS NULL` isolates pending deliveries currently occupying truck space.
+- **Description:** Counts how many active orders (DeliveryDate is NULL) each driver currently has and compares it to their truck's capacity to find remaining slots.
 ```sql
-SELECT t.DriverID, dc.DeliveryCieName, t.Capacity AS Max_Capacity,
-       COUNT(o.OrderId) AS Current_Active_Orders,
-       (t.Capacity - COUNT(o.OrderId)) AS Remaining_Slots
+/* We count how many active orders (DeliveryDate is NULL) 
+   each driver currently has and compare it to their truck's capacity. */
+SELECT 
+    t.DriverID, 
+    dc.DeliveryCieName, 
+    t.Capacity AS Max_Capacity,
+    COUNT(o.OrderId) AS Current_Active_Orders,
+    (t.Capacity - COUNT(o.OrderId)) AS Remaining_Slots
 FROM TRUCK t
 JOIN DELIVERYCOMPAGNY dc ON t.DeliveryCieID = dc.DeliveryCieID
 LEFT JOIN "ORDER" o ON t.DriverID = o.DriverID AND o.DeliveryDate IS NULL
-WHERE t.Active = 1  
+WHERE t.Active = 1  -- Only active drivers
 GROUP BY t.DriverID, dc.DeliveryCieName, t.Capacity
-HAVING COUNT(o.OrderId) < t.Capacity 
+HAVING COUNT(o.OrderId) < t.Capacity  -- Only those who can still take orders
 ORDER BY Remaining_Slots DESC;
 ```
 **Execution & Result:**  
@@ -267,28 +316,37 @@ ORDER BY Remaining_Slots DESC;
 
 
 **Query 8: Regional Logistics & Profitability Analysis**
-- **Description:** A complex analysis showing per service region: Total Order Revenue, the dominant Delivery Company (most orders handled), and the count of "Critical" products (expiring within 30 days) stored in warehouses in that region.
-- **Logic:** Uses Window Functions (OVER, PARTITION BY), CTEs, and Correlated Subqueries to bridge three distinct domains: Sales, Logistics, and Inventory Health.
+- **Description:** Uses a CTE to calculate regional stats and a subquery to link warehouses to products nearing expiration.
 ```sql
+/* This query uses a CTE to calculate regional stats and a subquery to 
+   link warehouses to products nearing expiration. */
 WITH RegionalSales AS (
-    SELECT dcrs.RegionServed, dc.DeliveryCieName,
-           SUM(o.Price) OVER(PARTITION BY dcrs.RegionServed) as TotalRegionalRevenue,
-           COUNT(o.OrderId) OVER(PARTITION BY dcrs.RegionServed, dc.DeliveryCieID) as OrdersByCompany
+    SELECT 
+        dcrs.RegionServed,
+        dc.DeliveryCieName,
+        SUM(o.Price) OVER(PARTITION BY dcrs.RegionServed) as TotalRegionalRevenue,
+        COUNT(o.OrderId) OVER(PARTITION BY dcrs.RegionServed, dc.DeliveryCieID) as OrdersByCompany
     FROM DELIVERYCOMPAGNY dc
     JOIN DELIVERYCOMPAGNY_REGIONSERVED dcrs ON dc.DeliveryCieID = dcrs.DeliveryCieID
     JOIN TRUCK t ON dc.DeliveryCieID = t.DeliveryCieID
     JOIN "ORDER" o ON t.DriverID = o.DriverID
     WHERE o.OrderDate >= CURRENT_DATE - INTERVAL '6 months'
 )
-SELECT DISTINCT rs.RegionServed, rs.TotalRegionalRevenue,
-    (SELECT dc2.DeliveryCieName FROM RegionalSales rs2
+SELECT DISTINCT
+    rs.RegionServed,
+    rs.TotalRegionalRevenue,
+    -- Identifies the top performing company in each region
+    (SELECT dc2.DeliveryCieName 
+     FROM RegionalSales rs2 
      JOIN DELIVERYCOMPAGNY dc2 ON rs2.DeliveryCieName = dc2.DeliveryCieName
-     WHERE rs2.RegionServed = rs.RegionServed
+     WHERE rs2.RegionServed = rs.RegionServed 
      ORDER BY rs2.OrdersByCompany DESC LIMIT 1) as Leading_Cie,
-    (SELECT COUNT(p.ProductID) FROM PRODUCT p
+    -- Counts critical expiring products in the region's warehouses
+    (SELECT COUNT(p.ProductID)
+     FROM PRODUCT p
      JOIN LOCATED l ON p.ProductID = l.ProductID
      JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
-     WHERE w.Region = rs.RegionServed
+     WHERE w.Region = rs.RegionServed 
      AND p.ExpirationDate BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days') as Critical_Exp_Count
 FROM RegionalSales rs
 ORDER BY rs.TotalRegionalRevenue DESC;
@@ -333,33 +391,12 @@ COMMIT;
 
 ### 3. UPDATE Queries
 
-**1. Price Adjustment by Kashrut Category:**
-Increases the unit price by 10% for all products carrying the 'Badatz' Kashrut status.
+**1. Restock Based on Minimum:**
+**Description:** Adding 100 units to the inventory for all products that have fallen below their minimum stock threshold.
 ```sql
-UPDATE PRODUCT SET UnitPrice = UnitPrice * 1.10 WHERE KashrutStatus = 'Badatz';
-```
-**Result (Before / Execution / After):**  
-![Before](images/Stage%202/ProductUpdate1.png)  
-![Execution](images/Stage%202/ProductUpdate2.png.png)  
-![After](images/Stage%202/ProductUpdate3.png.png)
-
-
-**2. Deactivating Idle Trucks:**
-Sets Active = 0 for any truck/driver that hasn't processed an order in the last 30 days.
-```sql
-UPDATE TRUCK SET Active = 0 
-WHERE DriverID NOT IN (SELECT DriverID FROM "ORDER" WHERE OrderDate >= CURRENT_DATE - INTERVAL '30 days');
-```
-**Result (Before / Execution / After):**  
-![Before](images/Stage%202/DriverUpdate1.jpeg)  
-![Execution](images/Stage%202/DriverUpdate2.png)  
-![After](images/Stage%202/DriverUpdate3.png)
-
-
-**3. Updating Inventory Levels:**
-Adjusts stock levels in the inventory table based on recent deliveries or audits.
-```sql
-UPDATE INVENTORY SET StockLevel = StockLevel + 50 WHERE ProductID = 101 AND WarehouseID = 1;
+UPDATE INVENTORY
+SET Quantity = Quantity + 100
+WHERE Quantity < MinimumStock;
 ```
 **Result (Before / Execution / After):**  
 ![Before](images/Stage%202/InventoryUpdate1.png)  
@@ -367,39 +404,75 @@ UPDATE INVENTORY SET StockLevel = StockLevel + 50 WHERE ProductID = 101 AND Ware
 ![After](images/Stage%202/InventoryUpdate3.png)
 
 
+**2. Truck Maintenance Status:**
+**Description:** Updating the maintenance status to 'Required' for drivers/trucks that have completed more than 50 orders.
+```sql
+UPDATE TRUCK
+SET MaintenanceStatus = 'Required'
+WHERE DriverID IN (
+    SELECT DriverID 
+    FROM "ORDER" 
+    GROUP BY DriverID 
+    HAVING COUNT(*) > 50
+);
+```
+**Result (Before / Execution / After):**  
+![Before](images/Stage%202/DriverUpdate1.jpeg)  
+![Execution](images/Stage%202/DriverUpdate2.png)  
+![After](images/Stage%202/DriverUpdate3.png)
+
+
+**3. Seasonal Discount:**
+**Description:** Applying a 10% price reduction to products manufactured before 2024 to encourage sales.
+```sql
+UPDATE PRODUCT
+SET Price = Price * 0.9
+WHERE DateOfManufacture < '2024-01-01';
+```
+**Result (Before / Execution / After):**  
+![Before](images/Stage%202/ProductUpdate1.png)  
+![Execution](images/Stage%202/ProductUpdate2.png.png)  
+![After](images/Stage%202/ProductUpdate3.png.png)
+
+
 ---
 
 ### 4. DELETE Queries
 
-**1. Purging Old Expired Inventory History:**
-Deletes records of products that expired more than a year ago to keep the database lightweight.
+**1. Remove Old Empty Orders**
+**Description:** Deleting orders from previous years that do not contain any items (to clean up the system).
 ```sql
-DELETE FROM PRODUCT WHERE ExpirationDate < CURRENT_DATE - INTERVAL '1 year';
+DELETE FROM "ORDER"
+WHERE OrderDate < '2025-01-01'
+AND OrderId NOT IN (SELECT OrderId FROM CONTAINS);
+```
+**Result (Execution / After):**  
+![Execution](images/Stage%202/DeleteOrder2.png)  
+![After](images/Stage%202/DeleteOrder3.png)
+
+
+**2. Remove an unused or specific Kashrut certification**
+**Description:** Removing a kashrut type that is no longer supported or needed.
+```sql
+DELETE FROM PRODUCT_KASHRUT 
+WHERE Kashrut = 'OU';
 ```
 **Result (Before & Execution / After):**  
 ![Before](images/Stage%202/DeleteK1.png)  
 ![After](images/Stage%202/Deletek2.png)
 
 
-**2. Removing Defunct Delivery Companies' Trucks:**
-Removes inactive trucks belonging to a delivery company that is no longer contracted.
+**3. Remove Inactive Trucks with No Order History**
+**Description:** Deleting trucks/drivers that are marked as inactive and have never been assigned to any order to keep the fleet database clean.
 ```sql
-DELETE FROM TRUCK WHERE Active = 0 AND DeliveryCieID = 99; 
+DELETE FROM TRUCK
+WHERE Active = 0 
+AND DriverID NOT IN (SELECT DriverID FROM "ORDER");
 ```
 **Result (Before / Execution / After):**  
 ![Before](images/Stage%202/DeleteTruck1.png)  
 ![Execution](images/Stage%202/DeleteTruck2.png)  
 ![After](images/Stage%202/DeleteTruck3.png)
-
-
-**3. Cleaning Up Empty Orders:**
-Deletes order headers that have no corresponding items in the CONTAIN table (orphaned records).
-```sql
-DELETE FROM "ORDER" WHERE OrderId NOT IN (SELECT OrderId FROM CONTAIN);
-```
-**Result (Execution / After):**  
-![Execution](images/Stage%202/DeleteOrder2.png)  
-![After](images/Stage%202/DeleteOrder3.png)
 
 
 ---
