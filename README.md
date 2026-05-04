@@ -359,32 +359,78 @@ ORDER BY rs.TotalRegionalRevenue DESC;
 
 ### 2. COMMIT & ROLLBACK
 
-#### Rollback Example
-**Scenario:** We mistakenly update the capacity of all active trucks. We view the incorrect state, then issue a ROLLBACK to revert the database to its previous state.
+#### ROLLBACK
 ```sql
-BEGIN;
-UPDATE TRUCK SET Capacity = Capacity + 10 WHERE Active = 1;
--- [View DB State]
-ROLLBACK;
--- [Data reverted]
+BEGIN; -- Starts the transaction
+
+-- 1. SHOW STATE BEFORE
+-- Check drivers with more than 50 orders to see their current status
+SELECT DriverID, MaintenanceStatus 
+FROM TRUCK 
+WHERE DriverID IN (SELECT DriverID FROM "ORDER" GROUP BY DriverID HAVING COUNT(*) > 50);
 ```
-**Execution Process:**  
-*State Before/During Update:*  
-![DB State Update 1](images/Stage%202/RollBack1.png)  
-![DB State Update 2](images/Stage%202/RollBack2.png)  
-*State After Rollback:*  
-![DB State Rollback](images/Stage%202/RollBack3.png)
+![State Before Update](images/Stage%202/RollBack1.png)
+
+```sql
+-- 2. EXECUTE MAINTENANCE UPDATE
+-- Changes status to 'Required' for overloaded drivers
+UPDATE TRUCK
+SET MaintenanceStatus = 'Required'
+WHERE DriverID IN (
+    SELECT DriverID FROM "ORDER" 
+    GROUP BY DriverID 
+    HAVING COUNT(*) > 50
+);
+
+-- 3. SHOW STATE AFTER UPDATE BUT BEFORE ROLLBACK
+-- You should now see 'Required' for these drivers
+SELECT DriverID, MaintenanceStatus 
+FROM TRUCK 
+WHERE DriverID IN (SELECT DriverID FROM "ORDER" GROUP BY DriverID HAVING COUNT(*) > 50);
+```
+![State After Update](images/Stage%202/RollBack2.png)
+
+```sql
+ROLLBACK; -- Undo all changes!
+
+-- 4. SHOW THAT STATE RETURNED TO INITIAL VALUES
+-- Statuses should be back to 'Good', 'Fair', etc.
+SELECT DriverID, MaintenanceStatus 
+FROM TRUCK 
+WHERE DriverID IN (SELECT DriverID FROM "ORDER" GROUP BY DriverID HAVING COUNT(*) > 50);
+```
+![State After Rollback](images/Stage%202/RollBack3.png)
 
 
-#### Commit Example
-**Scenario:** We officially register a new truck into the fleet and permanently save the transaction using COMMIT.
+#### COMMIT
 ```sql
-BEGIN;
-INSERT INTO TRUCK (DriverID, DeliveryCieID, Capacity, Active) VALUES (999, 1, 50, 1);
-COMMIT;
+BEGIN; -- Starts the transaction
+
+-- 1. EXECUTE THE UPDATE
+-- Set status to 'Required' based on order count
+UPDATE TRUCK
+SET MaintenanceStatus = 'Required'
+WHERE DriverID IN (
+    SELECT DriverID FROM "ORDER" 
+    GROUP BY DriverID 
+    HAVING COUNT(*) > 50
+);
+
+-- 2. SHOW MODIFIED STATE 
+-- Confirm the change is visible within the current transaction
+SELECT DriverID, MaintenanceStatus 
+FROM TRUCK 
+WHERE DriverID IN (SELECT DriverID FROM "ORDER" GROUP BY DriverID HAVING COUNT(*) > 50);
+
+COMMIT; -- Permanently save the changes to the database
+
+-- 3. SHOW STATE AFTER COMMIT 
+-- Status remains 'Required' because the transaction was finalized
+SELECT DriverID, MaintenanceStatus 
+FROM TRUCK 
+WHERE DriverID IN (SELECT DriverID FROM "ORDER" GROUP BY DriverID HAVING COUNT(*) > 50);
 ```
-**DB State After Commit:**  
-![Commit Confirmation](images/Stage%202/Commit.png)
+![Commit Confirmation 1](images/Stage%202/Commit.png)
 
 
 ---
@@ -481,55 +527,73 @@ AND DriverID NOT IN (SELECT DriverID FROM "ORDER");
 
 **🚨 Important Note:** A significant portion of our database constraints (Primary Keys, Foreign Keys, `NOT NULL`, and basic checks) were already thoroughly defined directly during the table creation phase. Because of this solid foundation, the new constraints added here via `ALTER TABLE` are specifically targeted at advanced business rules, keeping them simple and effective. You can view our extensive initial constraint setup in our original script: [createTables.sql](Stage%201/createTables.sql).
 
-**1. Order Price Validation:**
-- **Description:** Ensures an order cannot be logged with a negative price or a price of zero.
+**1. URL Format Constraint:**
+**Description:** Ensures the website URL always starts with 'http' to maintain data consistency.
 ```sql
-ALTER TABLE "ORDER" ADD CONSTRAINT CHK_OrderPrice CHECK (Price > 0);
-```
+ALTER TABLE STORE 
+ADD CONSTRAINT check_url_format CHECK (WebSiteUrl LIKE 'http%');
 
-**2. Store Rating Bounds:**
-- **Description:** Maintains data integrity for the store rating system (must be exactly between 1 and 5).
-```sql
-ALTER TABLE STORE ADD CONSTRAINT CHK_StoreRating CHECK (Rating >= 1 AND Rating <= 5);
+-- Attempting to update a store with an invalid URL format (missing 'http')
+-- This will trigger the 'check_url_format' constraint error.
+UPDATE STORE 
+SET WebSiteUrl = 'www.ramilevy.co.il' 
+WHERE StoreID = 1;
 ```
-
-**3. Default Truck Capacity:**
-- **Description:** If a truck is registered without specifying capacity, the system automatically assigns a default value of 20.
-```sql
-ALTER TABLE TRUCK ALTER COLUMN Capacity SET DEFAULT 20;
-```
-
-**Constraint Results / Violations:**  
 ![Constraint Error](images/Stage%202/Constraint.png)
+
+**2. Logic Stock Constraint:**
+**Description:** Prevents errors by ensuring MinimumStock never exceeds a logical maximum (e.g., 10,000).
+```sql
+ALTER TABLE INVENTORY 
+ADD CONSTRAINT check_min_stock_limit CHECK (MinimumStock <= 10000);
+```
+
+**3. Contact Uniqueness Constraint:**
+**Description:** Ensures that no two stores share the same phone number.
+```sql
+ALTER TABLE STORE 
+ADD CONSTRAINT unique_store_phone UNIQUE (Phone);
+```
 
 
 ---
 
 ### 6. Indexes
 
-**1. Index on Expiration Date (`ExpirationDate`):**
-- **Motivation:** Queries searching for expiring products (Query 4, Query 8) run frequently in our logistics environment. A B-Tree index is perfectly suited for these date-range (BETWEEN) scans.
+**INDEX 1: Optimizing Product Name searches (Textual search)**
+**Description:** Useful for customer-facing search bars.
 ```sql
-CREATE INDEX idx_product_expdate ON PRODUCT(ExpirationDate);
+EXPLAIN ANALYZE SELECT * FROM PRODUCT WHERE ProductName = 'Coconut - Creamed, Pure';
 ```
-
-**2. Index on Order Driver Assignment (`DriverID` in ORDER):**
-- **Motivation:** Dispatcher interfaces and queries (like Query 6 and 7) constantly filter orders by the assigned driver. Indexing this Foreign Key accelerates JOIN operations drastically.
+![Index Before](images/Stage%202/IndexBefore.png)
 ```sql
-CREATE INDEX idx_order_driver ON "ORDER"(DriverID);
-```
+CREATE INDEX idx_product_name ON PRODUCT(ProductName);
 
-**3. Index on Store Rating (`Rating`):**
-- **Motivation:** Facilitates rapid retrieval of Premium Stores (Query 3) without requiring a full table scan of the STORE table.
-```sql
-CREATE INDEX idx_store_rating ON STORE(Rating);
+EXPLAIN ANALYZE SELECT * FROM PRODUCT WHERE ProductName = 'Coconut - Creamed, Pure';
 ```
-
-**Performance (Execution times before and after index creation):**  
-*Before:*  
-![Index Before](images/Stage%202/IndexBefore.png)  
-*After:*  
 ![Index After](images/Stage%202/IndexAfter.png)
+
+
+**INDEX 2: Optimizing Expiration Date queries (Date filtering)**
+**Description:** Specifically improves Query 4 performance regarding stock rotation.
+```sql
+EXPLAIN ANALYZE SELECT * FROM PRODUCT WHERE ExpirationDate BETWEEN '2026-01-01' AND '2026-12-31';
+
+CREATE INDEX idx_expiration_date ON PRODUCT(ExpirationDate);
+
+EXPLAIN ANALYZE SELECT * FROM PRODUCT WHERE ExpirationDate BETWEEN '2026-01-01' AND '2026-12-31';
+```
+
+
+**INDEX 3: Optimizing Order Price analysis (Numeric range)**
+**Description:** Vital for financial reporting on the 1,000+ orders now in the database.
+```sql
+EXPLAIN ANALYZE SELECT * FROM "ORDER" WHERE Price > 400;
+
+CREATE INDEX idx_order_price ON "ORDER"(Price);
+
+EXPLAIN ANALYZE SELECT * FROM "ORDER" WHERE Price > 400;
+```
 
 
 ---
