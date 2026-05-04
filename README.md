@@ -334,7 +334,7 @@ COMMIT;
 ### 3. UPDATE Queries
 
 **1. Price Adjustment by Kashrut Category:**
-Increases the unit price by 10% for all products carrying the 'Badatz' Kashrut status.
+**Description:** Increases the unit price by 10% for all products carrying the 'Badatz' Kashrut status.
 ```sql
 UPDATE PRODUCT SET UnitPrice = UnitPrice * 1.10 WHERE KashrutStatus = 'Badatz';
 ```
@@ -345,7 +345,7 @@ UPDATE PRODUCT SET UnitPrice = UnitPrice * 1.10 WHERE KashrutStatus = 'Badatz';
 
 
 **2. Deactivating Idle Trucks:**
-Sets Active = 0 for any truck/driver that hasn't processed an order in the last 30 days.
+**Description:** Sets Active = 0 for any truck/driver that hasn't processed an order in the last 30 days.
 ```sql
 UPDATE TRUCK SET Active = 0 
 WHERE DriverID NOT IN (SELECT DriverID FROM "ORDER" WHERE OrderDate >= CURRENT_DATE - INTERVAL '30 days');
@@ -357,7 +357,7 @@ WHERE DriverID NOT IN (SELECT DriverID FROM "ORDER" WHERE OrderDate >= CURRENT_D
 
 
 **3. Updating Inventory Levels:**
-Adjusts stock levels in the inventory table based on recent deliveries or audits.
+**Description:** Adjusts stock levels in the inventory table based on recent deliveries or audits.
 ```sql
 UPDATE INVENTORY SET StockLevel = StockLevel + 50 WHERE ProductID = 101 AND WarehouseID = 1;
 ```
@@ -372,7 +372,7 @@ UPDATE INVENTORY SET StockLevel = StockLevel + 50 WHERE ProductID = 101 AND Ware
 ### 4. DELETE Queries
 
 **1. Purging Old Expired Inventory History:**
-Deletes records of products that expired more than a year ago to keep the database lightweight.
+**Description:** Deletes records of products that expired more than a year ago to keep the database lightweight.
 ```sql
 DELETE FROM PRODUCT WHERE ExpirationDate < CURRENT_DATE - INTERVAL '1 year';
 ```
@@ -382,7 +382,7 @@ DELETE FROM PRODUCT WHERE ExpirationDate < CURRENT_DATE - INTERVAL '1 year';
 
 
 **2. Removing Defunct Delivery Companies' Trucks:**
-Removes inactive trucks belonging to a delivery company that is no longer contracted.
+**Description:** Removes inactive trucks belonging to a delivery company that is no longer contracted.
 ```sql
 DELETE FROM TRUCK WHERE Active = 0 AND DeliveryCieID = 99; 
 ```
@@ -393,7 +393,7 @@ DELETE FROM TRUCK WHERE Active = 0 AND DeliveryCieID = 99;
 
 
 **3. Cleaning Up Empty Orders:**
-Deletes order headers that have no corresponding items in the CONTAIN table (orphaned records).
+**Description:** Deletes order headers that have no corresponding items in the CONTAIN table (orphaned records).
 ```sql
 DELETE FROM "ORDER" WHERE OrderId NOT IN (SELECT OrderId FROM CONTAIN);
 ```
@@ -463,5 +463,7 @@ CREATE INDEX idx_store_rating ON STORE(Rating);
 
 ### 7. Backup
 An updated backup file encompassing all Phase 2 modifications (new table states, constraints, indexes, and test data) has been generated.
+
+💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2)
 
 💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2)
