@@ -16,17 +16,21 @@ JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
 WHERE EXTRACT(YEAR FROM p.ExpirationDate) = 2026
 ORDER BY ExpMonth ASC, ExpDay ASC;
 
-/* Version B: Extracting parts individually for the SELECT 
-   but using a range for the WHERE clause (More efficient/SARGable). */
+/* Version B: Using a Subquery to filter 2026 products efficiently 
+   using a SARGable range before joining other tables. */
 SELECT 
-    p.ProductName, 
+    p_sub.ProductName, 
     w.Region,
-    EXTRACT(YEAR FROM p.ExpirationDate) as ExpYear,
-    EXTRACT(MONTH FROM p.ExpirationDate) as ExpMonth,
-    EXTRACT(DAY FROM p.ExpirationDate) as ExpDay,
-    p.ExpirationDate
-FROM PRODUCT p
-JOIN LOCATED l ON p.ProductID = l.ProductID
+    EXTRACT(YEAR FROM p_sub.ExpirationDate) as ExpYear,
+    EXTRACT(MONTH FROM p_sub.ExpirationDate) as ExpMonth,
+    EXTRACT(DAY FROM p_sub.ExpirationDate) as ExpDay,
+    p_sub.ExpirationDate
+FROM (
+    -- Subquery: Filter products by date range first
+    SELECT ProductID, ProductName, ExpirationDate
+    FROM PRODUCT
+    WHERE ExpirationDate BETWEEN '2026-01-01' AND '2026-12-31'
+) AS p_sub
+JOIN LOCATED l ON p_sub.ProductID = l.ProductID
 JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
-WHERE p.ExpirationDate BETWEEN '2026-01-01' AND '2026-12-31'
-ORDER BY p.ExpirationDate;
+ORDER BY p_sub.ExpirationDate;

@@ -234,22 +234,27 @@ ORDER BY ExpMonth ASC, ExpDay ASC;
 
 **Version B (SARGable):**
 ```sql
-/* Version B: Extracting parts individually for the SELECT 
-   but using a range for the WHERE clause (More efficient/SARGable). */
+/* Version B: Using a Subquery to filter 2026 products efficiently 
+   using a SARGable range before joining other tables. */
 SELECT 
-    p.ProductName, 
+    p_sub.ProductName, 
     w.Region,
-    EXTRACT(YEAR FROM p.ExpirationDate) as ExpYear,
-    EXTRACT(MONTH FROM p.ExpirationDate) as ExpMonth,
-    EXTRACT(DAY FROM p.ExpirationDate) as ExpDay,
-    p.ExpirationDate
-FROM PRODUCT p
-JOIN LOCATED l ON p.ProductID = l.ProductID
+    EXTRACT(YEAR FROM p_sub.ExpirationDate) as ExpYear,
+    EXTRACT(MONTH FROM p_sub.ExpirationDate) as ExpMonth,
+    EXTRACT(DAY FROM p_sub.ExpirationDate) as ExpDay,
+    p_sub.ExpirationDate
+FROM (
+    -- Subquery: Filter products by date range first
+    SELECT ProductID, ProductName, ExpirationDate
+    FROM PRODUCT
+    WHERE ExpirationDate BETWEEN '2026-01-01' AND '2026-12-31'
+) AS p_sub
+JOIN LOCATED l ON p_sub.ProductID = l.ProductID
 JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
-WHERE p.ExpirationDate BETWEEN '2026-01-01' AND '2026-12-31'
-ORDER BY p.ExpirationDate;
+ORDER BY p_sub.ExpirationDate;
 ```
-**Comparison (Why Version B is better):** Version B is significantly more efficient because its WHERE clause is "SARGable" (Search Argument Able). By using BETWEEN with static date limits, the database optimizer can utilize an index on `ExpirationDate`. Version A applies the `EXTRACT()` function directly to the column within the WHERE clause, forcing a slow, full table scan because the engine must calculate the year for every row before filtering.
+
+**Comparison (Why Version B is better):**  Version B is the optimized approach for production environments, ensuring fast response times even as the PRODUCT and ORDER tables grow to thousands of rows.
 
 **Execution & Result:**  
 ![Query 4 Result](images/Stage%202/Query4.png)
@@ -258,20 +263,20 @@ ORDER BY p.ExpirationDate;
 #### Single Versions (Complex Queries)
 
 **Query 5: Full Order Breakdown**
-- **Description:** Retrieves all products within a specific order with detailed attributes (including Kashrut certification and line total).
+- **Description:** Retrieves all products within a specific order (3) with detailed attributes (including Kashrut certification and line total).
 ```sql
 SELECT 
-    o.OrderId, 
-    p.ProductName, 
-    pk.Kashrut, 
-    c.Quantity, 
-    (c.Quantity * p.Price) as LineTotal
-FROM "ORDER" o
-JOIN CONTAINS c ON o.OrderId = c.OrderId
-JOIN PRODUCT p ON c.ProductID = p.ProductID
-JOIN PRODUCT_KASHRUT pk ON p.ProductID = pk.ProductID
-WHERE o.OrderId = 3 
-ORDER BY p.ProductName;
+    (SELECT o.OrderId FROM "ORDER" o WHERE o.OrderId = c.OrderId) AS OrderId,
+    (SELECT p.ProductName FROM PRODUCT p WHERE p.ProductID = c.ProductID) AS ProductName,
+    (SELECT pk.Kashrut FROM PRODUCT_KASHRUT pk WHERE pk.ProductID = c.ProductID) AS Kashrut,
+    c.Quantity,
+    (c.Quantity * (SELECT p.Price FROM PRODUCT p WHERE p.ProductID = c.ProductID)) AS LineTotal
+FROM 
+    CONTAINS c
+WHERE 
+    c.OrderId = 3
+ORDER BY 
+    ProductName;
 ```
 **Execution & Result:**  
 ![Query 5 Result](images/Stage%202/Query5.png)
@@ -603,4 +608,4 @@ EXPLAIN ANALYZE SELECT * FROM "ORDER" WHERE Price > 400;
 ### 7. Backup
 An updated backup file encompassing all Phase 2 modifications (new table states, constraints, indexes, and test data) has been generated.
 
-💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2)
+💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2.sql)

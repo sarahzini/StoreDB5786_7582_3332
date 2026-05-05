@@ -1,4 +1,5 @@
---Goal :The query identifies products below their minimum stock level across all warehouses to generate a global replenishment report.
+--Goal :Analyzes the delivery performance and financial volume
+-- handled by different delivery companies within the current month.
 
 -- Direct grouping after join
 SELECT dc.DeliveryCieName, COUNT(o.OrderId) as TotalOrders, SUM(o.Price) as TotalValue

@@ -1,13 +1,19 @@
--- Retrieves all products within a specific order with detailed attributes.
+-- Retrieves all products within a specific order (3) with detailed attributes.
 SELECT 
-    o.OrderId, 
-    p.ProductName, 
-    pk.Kashrut, 
-    c.Quantity, 
-    (c.Quantity * p.Price) as LineTotal
-FROM "ORDER" o
-JOIN CONTAINS c ON o.OrderId = c.OrderId
-JOIN PRODUCT p ON c.ProductID = p.ProductID
-JOIN PRODUCT_KASHRUT pk ON p.ProductID = pk.ProductID
-WHERE o.OrderId = 3 
-ORDER BY p.ProductName;
+    (SELECT o.OrderId FROM "ORDER" o WHERE o.OrderId = c.OrderId)
+     AS OrderId,
+    (SELECT p.ProductName 
+    FROM PRODUCT p 
+    WHERE p.ProductID = c.ProductID)
+     AS ProductName,
+    (SELECT pk.Kashrut FROM PRODUCT_KASHRUT pk WHERE pk.ProductID = c.ProductID)
+     AS Kashrut,
+    c.Quantity,
+    (c.Quantity * (SELECT p.Price FROM PRODUCT p WHERE p.ProductID = c.ProductID)) 
+    AS LineTotal
+FROM 
+    CONTAINS c
+WHERE 
+    c.OrderId = 3
+ORDER BY 
+    ProductName;
