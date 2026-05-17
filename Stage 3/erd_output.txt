@@ -1,0 +1,66 @@
+ENTITY NAME: CUSTOMER
+  Entity kind  : REGULAR ENTITY
+  Fields       : customerid, customername, email, phone, city, street
+  Primary key  : customerid
+  Foreign keys : none
+
+ENTITY NAME: CATEGORY
+  Entity kind  : REGULAR ENTITY
+  Fields       : categoryid, categoryname
+  Primary key  : categoryid
+  Foreign keys : none
+
+ENTITY NAME: STORE
+  Entity kind  : REGULAR ENTITY
+  Fields       : storeid, storename, phone, websiteurl, rating
+  Primary key  : storeid
+  Foreign keys : none
+
+ENTITY NAME: SUPPLIER
+  Entity kind  : REGULAR ENTITY
+  Fields       : supplierid, suppliername, email, phone, city, street
+  Primary key  : supplierid
+  Foreign keys : none
+
+ENTITY NAME: PRODUCT
+  Entity kind  : REGULAR ENTITY
+  Fields       : productid, productname, price, dateofmanufacture, expirationdate, kashrut, categoryid, supplierid
+  Primary key  : productid
+  Foreign keys :
+    - categoryid -> category(categoryid)
+    - supplierid -> supplier(supplierid)
+  Relationships:
+    - Linked to category : Many-to-One with category (mandatory)
+    - Linked to supplier : Many-to-One with supplier (mandatory)
+
+ENTITY NAME: ORDERS
+  Entity kind  : REGULAR ENTITY
+  Fields       : orderid, orderdate, totalamount, orderstatus, paymentmethod, customerid
+  Primary key  : orderid
+  Foreign keys :
+    - customerid -> customer(customerid)
+  Relationships:
+    - Linked to customer : Many-to-One with customer (mandatory)
+
+ENTITY NAME: ORDERITEM
+  Entity kind  : WEAK ENTITY
+  Fields       : orderitemid, orderid, productid, quantity, subtotal, inonsale, saledescription
+  Primary key  : orderid, orderitemid
+  Foreign keys :
+    - orderid -> orders(orderid)
+    - productid -> product(productid)
+  Relationships:
+    - Linked to orders : Identifying link to orders (owner of weak entity, mandatory)
+    - Linked to product : Many-to-One with product (mandatory)
+
+ENTITY NAME: INVENTORY
+  Entity kind  : REGULAR ENTITY
+  Fields       : productid, storeid, quantity, minimumstock
+  Primary key  : productid
+  Foreign keys :
+    - productid -> product(productid)
+    - storeid -> store(storeid)
+  Relationships:
+    - Linked to product : One-to-One with product (mandatory)
+    - Linked to store : Many-to-One with store (mandatory)
+
