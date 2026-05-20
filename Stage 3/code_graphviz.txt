@@ -1,0 +1,138 @@
+graph ER {
+  graph [
+    layout=neato
+    overlap=false
+    sep="+0.9"
+    esep="+0.4"
+    splines=true
+    outputorder=edgesfirst
+    bgcolor="white"
+  ]
+  node [fontname="Helvetica" fontsize=11 style=filled fillcolor=white]
+  edge [fontname="Helvetica" fontsize=11 fontcolor="#0055ff"]
+
+  // === CUSTOMER ===
+  E_CUSTOMER [label="CUSTOMER" shape=box peripheries=1 pos="0.00,-0.00!" width=1.4 height=0.6 pin=true]
+  E_CUSTOMER_A0 [label=<<U>&nbsp;customerid&nbsp;</U>> shape=ellipse style=solid pos="0.00,-1.65!" width=0.9 height=0.38 pin=true]
+  E_CUSTOMER -- E_CUSTOMER_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_CUSTOMER_A1 [label="customername" shape=ellipse style=solid pos="1.43,-0.82!" width=0.9 height=0.38 pin=true]
+  E_CUSTOMER -- E_CUSTOMER_A1 [len=0.65 weight=10 fontcolor=black label=""]
+  E_CUSTOMER_A2 [label="email (O)" shape=ellipse style=dashed pos="1.43,0.82!" width=0.9 height=0.38 pin=true]
+  E_CUSTOMER -- E_CUSTOMER_A2 [len=0.65 weight=10 fontcolor=black label=""]
+  E_CUSTOMER_A3 [label="phone" shape=ellipse style=solid pos="0.00,1.65!" width=0.9 height=0.38 pin=true]
+  E_CUSTOMER -- E_CUSTOMER_A3 [len=0.65 weight=10 fontcolor=black label=""]
+  E_CUSTOMER_A4 [label="city" shape=ellipse style=solid pos="-1.43,0.83!" width=0.9 height=0.38 pin=true]
+  E_CUSTOMER -- E_CUSTOMER_A4 [len=0.65 weight=10 fontcolor=black label=""]
+  E_CUSTOMER_A5 [label="street" shape=ellipse style=solid pos="-1.43,-0.83!" width=0.9 height=0.38 pin=true]
+  E_CUSTOMER -- E_CUSTOMER_A5 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === CATEGORY ===
+  E_CATEGORY [label="CATEGORY" shape=box peripheries=1 pos="6.00,-0.00!" width=1.4 height=0.6 pin=true]
+  E_CATEGORY_A0 [label=<<U>&nbsp;categoryid&nbsp;</U>> shape=ellipse style=solid pos="6.00,-1.65!" width=0.9 height=0.38 pin=true]
+  E_CATEGORY -- E_CATEGORY_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_CATEGORY_A1 [label="categoryname" shape=ellipse style=solid pos="6.00,1.65!" width=0.9 height=0.38 pin=true]
+  E_CATEGORY -- E_CATEGORY_A1 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === STORE ===
+  E_STORE [label="STORE" shape=box peripheries=1 pos="12.00,-0.00!" width=1.4 height=0.6 pin=true]
+  E_STORE_A0 [label=<<U>&nbsp;storeid&nbsp;</U>> shape=ellipse style=solid pos="12.00,-1.65!" width=0.9 height=0.38 pin=true]
+  E_STORE -- E_STORE_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_STORE_A1 [label="storename" shape=ellipse style=solid pos="13.57,-0.51!" width=0.9 height=0.38 pin=true]
+  E_STORE -- E_STORE_A1 [len=0.65 weight=10 fontcolor=black label=""]
+  E_STORE_A2 [label="phone" shape=ellipse style=solid pos="12.97,1.33!" width=0.9 height=0.38 pin=true]
+  E_STORE -- E_STORE_A2 [len=0.65 weight=10 fontcolor=black label=""]
+  E_STORE_A3 [label="websiteurl (O)" shape=ellipse style=dashed pos="11.03,1.33!" width=0.9 height=0.38 pin=true]
+  E_STORE -- E_STORE_A3 [len=0.65 weight=10 fontcolor=black label=""]
+  E_STORE_A4 [label="rating (O)" shape=ellipse style=dashed pos="10.43,-0.51!" width=0.9 height=0.38 pin=true]
+  E_STORE -- E_STORE_A4 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === SUPPLIER ===
+  E_SUPPLIER [label="SUPPLIER" shape=box peripheries=1 pos="0.00,-6.50!" width=1.4 height=0.6 pin=true]
+  E_SUPPLIER_A0 [label=<<U>&nbsp;supplierid&nbsp;</U>> shape=ellipse style=solid pos="0.00,-8.15!" width=0.9 height=0.38 pin=true]
+  E_SUPPLIER -- E_SUPPLIER_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_SUPPLIER_A1 [label="suppliername" shape=ellipse style=solid pos="1.43,-7.33!" width=0.9 height=0.38 pin=true]
+  E_SUPPLIER -- E_SUPPLIER_A1 [len=0.65 weight=10 fontcolor=black label=""]
+  E_SUPPLIER_A2 [label="email (O)" shape=ellipse style=dashed pos="1.43,-5.68!" width=0.9 height=0.38 pin=true]
+  E_SUPPLIER -- E_SUPPLIER_A2 [len=0.65 weight=10 fontcolor=black label=""]
+  E_SUPPLIER_A3 [label="phone" shape=ellipse style=solid pos="0.00,-4.85!" width=0.9 height=0.38 pin=true]
+  E_SUPPLIER -- E_SUPPLIER_A3 [len=0.65 weight=10 fontcolor=black label=""]
+  E_SUPPLIER_A4 [label="city" shape=ellipse style=solid pos="-1.43,-5.67!" width=0.9 height=0.38 pin=true]
+  E_SUPPLIER -- E_SUPPLIER_A4 [len=0.65 weight=10 fontcolor=black label=""]
+  E_SUPPLIER_A5 [label="street" shape=ellipse style=solid pos="-1.43,-7.33!" width=0.9 height=0.38 pin=true]
+  E_SUPPLIER -- E_SUPPLIER_A5 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === PRODUCT ===
+  E_PRODUCT [label="PRODUCT" shape=box peripheries=1 pos="6.00,-6.50!" width=1.4 height=0.6 pin=true]
+  E_PRODUCT_A0 [label=<<U>&nbsp;productid&nbsp;</U>> shape=ellipse style=solid pos="6.00,-8.15!" width=0.9 height=0.38 pin=true]
+  E_PRODUCT -- E_PRODUCT_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_PRODUCT_A1 [label="productname" shape=ellipse style=solid pos="7.43,-7.33!" width=0.9 height=0.38 pin=true]
+  E_PRODUCT -- E_PRODUCT_A1 [len=0.65 weight=10 fontcolor=black label=""]
+  E_PRODUCT_A2 [label="price" shape=ellipse style=solid pos="7.43,-5.68!" width=0.9 height=0.38 pin=true]
+  E_PRODUCT -- E_PRODUCT_A2 [len=0.65 weight=10 fontcolor=black label=""]
+  E_PRODUCT_A3 [label="dateofmanufacture" shape=ellipse style=solid pos="6.00,-4.85!" width=0.9 height=0.38 pin=true]
+  E_PRODUCT -- E_PRODUCT_A3 [len=0.65 weight=10 fontcolor=black label=""]
+  E_PRODUCT_A4 [label="expirationdate" shape=ellipse style=solid pos="4.57,-5.67!" width=0.9 height=0.38 pin=true]
+  E_PRODUCT -- E_PRODUCT_A4 [len=0.65 weight=10 fontcolor=black label=""]
+  E_PRODUCT_A5 [label="kashrut" shape=ellipse style=solid pos="4.57,-7.33!" width=0.9 height=0.38 pin=true]
+  E_PRODUCT -- E_PRODUCT_A5 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === ORDERS ===
+  E_ORDERS [label="ORDERS" shape=box peripheries=1 pos="12.00,-6.50!" width=1.4 height=0.6 pin=true]
+  E_ORDERS_A0 [label=<<U>&nbsp;orderid&nbsp;</U>> shape=ellipse style=solid pos="12.00,-8.15!" width=0.9 height=0.38 pin=true]
+  E_ORDERS -- E_ORDERS_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERS_A1 [label="orderdate" shape=ellipse style=solid pos="13.57,-7.01!" width=0.9 height=0.38 pin=true]
+  E_ORDERS -- E_ORDERS_A1 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERS_A2 [label="totalamount" shape=ellipse style=solid pos="12.97,-5.17!" width=0.9 height=0.38 pin=true]
+  E_ORDERS -- E_ORDERS_A2 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERS_A3 [label="orderstatus" shape=ellipse style=solid pos="11.03,-5.17!" width=0.9 height=0.38 pin=true]
+  E_ORDERS -- E_ORDERS_A3 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERS_A4 [label="paymentmethod" shape=ellipse style=solid pos="10.43,-7.01!" width=0.9 height=0.38 pin=true]
+  E_ORDERS -- E_ORDERS_A4 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === ORDERITEM ===
+  E_ORDERITEM [label="ORDERITEM" shape=box peripheries=2 pos="0.00,-13.00!" width=1.4 height=0.6 pin=true]
+  E_ORDERITEM_A0 [label=<<U>&nbsp;orderid&nbsp;</U>> shape=ellipse style=solid pos="0.00,-14.65!" width=0.9 height=0.38 pin=true]
+  E_ORDERITEM -- E_ORDERITEM_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERITEM_A1 [label=<<U>&nbsp;orderitemid&nbsp;</U>> shape=ellipse style=solid pos="1.43,-13.82!" width=0.9 height=0.38 pin=true]
+  E_ORDERITEM -- E_ORDERITEM_A1 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERITEM_A2 [label="quantity" shape=ellipse style=solid pos="1.43,-12.18!" width=0.9 height=0.38 pin=true]
+  E_ORDERITEM -- E_ORDERITEM_A2 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERITEM_A3 [label="subtotal" shape=ellipse style=solid pos="0.00,-11.35!" width=0.9 height=0.38 pin=true]
+  E_ORDERITEM -- E_ORDERITEM_A3 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERITEM_A4 [label="inonsale" shape=ellipse style=solid pos="-1.43,-12.17!" width=0.9 height=0.38 pin=true]
+  E_ORDERITEM -- E_ORDERITEM_A4 [len=0.65 weight=10 fontcolor=black label=""]
+  E_ORDERITEM_A5 [label="saledescription (O)" shape=ellipse style=dashed pos="-1.43,-13.82!" width=0.9 height=0.38 pin=true]
+  E_ORDERITEM -- E_ORDERITEM_A5 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === INVENTORY ===
+  E_INVENTORY [label="INVENTORY" shape=box peripheries=1 pos="6.00,-13.00!" width=1.4 height=0.6 pin=true]
+  E_INVENTORY_A0 [label=<<U>&nbsp;productid&nbsp;</U>> shape=ellipse style=solid pos="6.00,-14.65!" width=0.9 height=0.38 pin=true]
+  E_INVENTORY -- E_INVENTORY_A0 [len=0.65 weight=10 fontcolor=black label=""]
+  E_INVENTORY_A1 [label="quantity" shape=ellipse style=solid pos="7.43,-12.18!" width=0.9 height=0.38 pin=true]
+  E_INVENTORY -- E_INVENTORY_A1 [len=0.65 weight=10 fontcolor=black label=""]
+  E_INVENTORY_A2 [label="minimumstock" shape=ellipse style=solid pos="4.57,-12.17!" width=0.9 height=0.38 pin=true]
+  E_INVENTORY -- E_INVENTORY_A2 [len=0.65 weight=10 fontcolor=black label=""]
+
+  // === Relationships ===
+  D_0 [label="Linked to category" shape=diamond fontcolor=black peripheries=1 style=filled fillcolor=white pos="6.00,-3.25!" width=1.3 height=0.6 pin=true]
+  E_PRODUCT -- D_0 [label="  N  " weight=1 len=1.6]
+  D_0 -- E_CATEGORY [label="  1  " weight=1 len=1.6]
+  D_1 [label="Linked to supplier" shape=diamond fontcolor=black peripheries=1 style=filled fillcolor=white pos="3.00,-6.50!" width=1.3 height=0.6 pin=true]
+  E_PRODUCT -- D_1 [label="  N  " weight=1 len=1.6]
+  D_1 -- E_SUPPLIER [label="  1  " weight=1 len=1.6]
+  D_2 [label="Linked to customer" shape=diamond fontcolor=black peripheries=1 style=filled fillcolor=white pos="6.00,-3.25!" width=1.3 height=0.6 pin=true]
+  E_ORDERS -- D_2 [label="  N  " weight=1 len=1.6]
+  D_2 -- E_CUSTOMER [label="  1  " weight=1 len=1.6]
+  D_3 [label="Linked to orders" shape=diamond fontcolor=black peripheries=2 style=filled fillcolor=white pos="6.00,-9.75!" width=1.3 height=0.6 pin=true]
+  E_ORDERITEM -- D_3 [label="  N  " weight=1 len=1.6]
+  D_3 -- E_ORDERS [label="  1  " weight=1 len=1.6]
+  D_4 [label="Linked to product" shape=diamond fontcolor=black peripheries=2 style=filled fillcolor=white pos="3.00,-9.75!" width=1.3 height=0.6 pin=true]
+  E_ORDERITEM -- D_4 [label="  N  " weight=1 len=1.6]
+  D_4 -- E_PRODUCT [label="  1  " weight=1 len=1.6]
+  D_5 [label="Linked to product" shape=diamond fontcolor=black peripheries=1 style=filled fillcolor=white pos="6.00,-9.75!" width=1.3 height=0.6 pin=true]
+  E_INVENTORY -- D_5 [label="  N  " weight=1 len=1.6]
+  D_5 -- E_PRODUCT [label="  1  " weight=1 len=1.6]
+  D_6 [label="Linked to store" shape=diamond fontcolor=black peripheries=1 style=filled fillcolor=white pos="9.00,-6.50!" width=1.3 height=0.6 pin=true]
+  E_INVENTORY -- D_6 [label="  N  " weight=1 len=1.6]
+  D_6 -- E_STORE [label="  1  " weight=1 len=1.6]
+}
