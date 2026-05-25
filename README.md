@@ -19,6 +19,17 @@ Project by **Sara Heymann 2254681 and Sarah Sebaoun 345887582**
   - [5. Constraints (ALTER TABLE)](#5-constraints-alter-table)
   - [6. Indexes](#6-indexes)
   - [7. Backup](#7-backup-1)
+- [Phase 3: System Integration](#phase-3-system-integration)
+  - [Introduction](#phase-3-introduction)
+  - [Step 1 - Reverse Engineering: from SQL to ERD](#step-1---reverse-engineering-from-sql-to-erd)
+  - [Step 2 - DSD of the Received Department](#step-2---dsd-of-the-received-department)
+  - [Step 3 - The Two ERDs](#step-3---the-two-erds)
+  - [Step 4 - Integrated ERD & Design Decisions](#step-4---integrated-erd--design-decisions)
+  - [Step 5 - DSD After Integration](#step-5---dsd-after-integration)
+  - [Step 6 - Schema Changes (Integrate.sql)](#step-6---schema-changes-integratesql)
+  - [Step 7 - Data Verification](#step-7---data-verification)
+  - [Step 8 - Backup (backup3)](#step-8---backup-backup3)
+  - [Views](#views)
 
 ---
 
@@ -609,3 +620,259 @@ EXPLAIN ANALYZE SELECT * FROM "ORDER" WHERE Price > 400;
 An updated backup file encompassing all Phase 2 modifications (new table states, constraints, indexes, and test data) has been generated.
 
 💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2.sql)
+
+---
+
+## Phase 3: System Integration
+
+### Phase 3 Introduction
+In this phase we merge our Logistics system with the database of **another team**. Each team receives a backup of another team's project and must integrate the two databases into a **single unified database**.
+
+We applied **Integration Method A** (the *merge* approach): the received database is not kept as a separate system — its structure and data are absorbed into our existing database using only `CREATE TABLE` and `ALTER TABLE` commands. **No existing table is ever recreated from scratch.**
+
+The full integration workflow:
+1. Receive the other team's `CREATE TABLE` script and database backup.
+2. **Reverse-engineer** an **ERD** from their `CREATE TABLE` script, then draw the matching **DSD**.
+3. Place the two ERDs (ours + theirs) side by side.
+4. Design a single **integrated ERD**, documenting every design decision.
+5. Derive the new schema from the integrated ERD and apply it with `ALTER`/`CREATE` only — see `Integrate.sql`.
+6. Populate every table with data from **both** databases.
+7. Re-run the Phase 2 queries on the integrated database to confirm they still work.
+
+The received database is a **retail / orders system**: customers, product categories, suppliers, products, orders, order items, inventory and stores.
+
+---
+
+### Step 1 - Reverse Engineering: from SQL to ERD
+
+We received two files from the other team: their **`createTables.sql`** script and a **database backup**. They serve two different purposes in our workflow:
+
+- the **`createTables.sql`** script is the input read by our reverse-engineering algorithm to rebuild their ERD — this is the step described below;
+- the **database backup** (`backup2_01_25_26.sql`) is used only later, to restore their actual data into pgAdmin inside a separate `db2` schema (see Step 6).
+
+The assignment requires a **reverse-engineering algorithm**: a documented procedure that takes the received system's tables and produces its ERD. We implemented this algorithm as a Python program.
+
+- 🐍 **Algorithm code:** [txt_to_graphviz.py](Stage%203/txt_to_graphviz.py)
+- 📄 **Generated diagram description:** [code_graphviz.txt](Stage%203/code_graphviz.txt)
+
+#### How the algorithm works
+
+The program reads the received `createTables.sql` file and rebuilds the ERD step by step:
+
+**1. Parse the SQL.** Comments are stripped, then a regular expression isolates every `CREATE TABLE name ( ... );` block.
+
+**2. Extract the structure of each table.** For every table the algorithm collects:
+- the **primary-key** columns (from a `PRIMARY KEY (...)` clause or an inline declaration);
+- the **foreign-key** columns and the table each one references (from `FOREIGN KEY (...) REFERENCES ...`);
+- the remaining **normal columns**.
+
+**3. Apply the reverse-engineering rules** — this is the core logic that turns a physical schema back into a conceptual diagram:
+
+| What is found in the SQL | What it becomes in the ERD |
+| --- | --- |
+| A foreign-key column that is **part of the primary key** | An **identifying relationship** → the table is a **weak entity** (drawn with a double rectangle) |
+| A column **without** `NOT NULL` | An **optional attribute**, marked `(O)` and drawn with a dashed ellipse |
+| A foreign-key column **not** in the primary key | A normal **N : 1 relationship** (the table holding the FK is the "many" side, the referenced table is the "one" side) |
+| A `PRIMARY KEY` column | A **key attribute**, drawn underlined |
+
+**4. Build the diagram.** Entities are laid out on a grid; each entity's attributes are placed in a circular "crown" around it; every relationship becomes a diamond connecting two entities, labelled with its cardinalities (`N` and `1`).
+
+**5. Render the image.** The algorithm produces a Graphviz description in **Chen notation** (rectangles = entities, ellipses = attributes, diamonds = relationships) and sends it to a public Graphviz rendering service, which returns the final PNG.
+
+#### Result — ERD of the received department
+
+Running the algorithm on the received `createTables.sql` produced `erd_new.png`:
+
+![ERD of the New Department (reverse engineered)](Stage%203/erd_new.png)
+
+---
+
+### Step 2 - DSD of the Received Department
+
+Once the ERD was reverse-engineered, we drew the **DSD of the received department** manually — the physical schema corresponding to their 8 tables (`customer`, `category`, `supplier`, `product`, `orders`, `orderitem`, `inventory`, `store`):
+
+![DSD of the New Department](Stage%203/dsd_new.png)
+
+---
+
+### Step 3 - The Two ERDs
+
+At this point we hold **two** ERDs:
+
+- **Our original ERD** — the Logistics system (warehouses, trucks, delivery companies, stores, orders), shown earlier in [Phase 1](#erd-entity-relationship-diagram).
+- **The received ERD** — the retail/orders system reconstructed in Step 2 (`erd_new.png`).
+
+These two diagrams are the input for the design-level integration of the next step.
+
+---
+
+### Step 4 - Integrated ERD & Design Decisions
+
+We merged the two ERDs into a single **integrated ERD** using ERDPlus:
+
+![Integrated ERD](Stage%203/erd_integration.png)
+
+Designing the combined model required several decisions, documented here:
+
+- **New entities adopted from the received system:** `CUSTOMER`, `CATEGORY` and `SUPPLIER` are added as new tables.
+- **`PRODUCT` gains two links:** a mandatory link to `CATEGORY` and an **optional** link to `SUPPLIER`. The link to a supplier is optional on purpose — products from our original system have no supplier, so not every product is required to have one.
+- **`ORDER` can now belong to a Store *or* a Customer:** the received system attaches orders to customers, while our system attaches them to stores and drivers. In the integrated model `StoreID`, `DriverID` and the new `CustomerID` all become optional, and a rule guarantees that every order is linked to **at least one** of the two sides.
+- **`ORDER` gains `PaymentMethod` and `Status`** from the received system.
+- **`CONTAINS` absorbs the received `orderitem`:** it gains `SubTotal`, `InOnSale` and `SaleDescription`.
+- **`INVENTORY` gains a link to `STORE`:** the received inventory is tracked per store, so an inventory row is now attached to a store.
+- **`WAREHOUSE_WAREHOUSEMANAGER` is kept**, alongside the new `SUPPLIER` table.
+- **`INVENTORY` stays a regular entity:** although it could be drawn as a weak entity, both source schemas define its primary key as `ProductID` alone, so it is kept as a regular entity in the final model.
+
+---
+
+### Step 5 - DSD After Integration
+
+From the integrated ERD we derived the **DSD of the integrated database**:
+
+![DSD After Integration](Stage%203/dsd_integration.png)
+
+This DSD is the physical blueprint that `Integrate.sql` builds — but, crucially, it is built by **altering the existing tables**, never by dropping and recreating them.
+
+---
+
+### Step 6 - Schema Changes (Integrate.sql)
+
+All structural and data changes are applied by a single script, executed once inside one transaction (`BEGIN ... COMMIT`) so that any failure rolls everything back.
+
+- 📜 **Integration script:** [Integrate.sql](Stage%203/Integrate.sql)
+
+#### Preparing the data source
+
+The received backup was a UTF-16 dump that used `COPY ... FROM stdin`, which the pgAdmin Query Tool cannot run. We converted it to a UTF-8 file using standard `INSERT` statements, and restored it into a **separate schema named `db2`** inside the same database. Our original tables stay in the `public` schema. `Integrate.sql` then reads the received data from `db2` and writes it into `public`.
+
+#### What Integrate.sql takes into account
+
+**ID offset.** Both databases use their own `ProductID`, `OrderId` and `StoreID` values, so the same number can exist in both. Every received id is shifted by **+10000** before insertion, and the same offset is reused everywhere a shifted id appears (inventory, order items), so all links stay consistent.
+
+**Part 1 - New tables.** `CATEGORY`, `CUSTOMER` and `SUPPLIER` are created.
+
+**Part 2 - Altering existing tables.** New columns are added (`PRODUCT.CategoryID`, `PRODUCT.SupplierID`, `ORDER.PaymentMethod`, `ORDER.Status`, `ORDER.CustomerID`, `CONTAINS.SubTotal`, `CONTAINS.InOnSale`, `CONTAINS.SaleDescription`, `INVENTORY.StoreID`). They are added as nullable first, since existing rows have no value yet. `ORDER.StoreID` and `ORDER.DriverID` lose their `NOT NULL` so an order may instead belong to a customer.
+
+**Part 3 - Filling our existing rows.** Existing products receive a default `'no category'`; existing orders receive `PaymentMethod = 'Cash'`; existing `CONTAINS` rows get a computed `SubTotal` (`Quantity × Price`) and `InOnSale = FALSE`; existing inventory rows are attached to one of our stores.
+
+**Part 4 - Importing the received data.** Categories, suppliers and customers are copied directly. Products, orders, inventory and order items are imported with the +10000 offset. The received `orderitem` is merged into `CONTAINS`, summing quantities of duplicated (order, product) lines.
+
+**Data-quality handling — constraints are kept, invalid rows are skipped.** Rather than weakening any constraint, rows that would violate one are filtered out: received products whose `ExpirationDate` is earlier than `DateOfManufacture` are skipped (with their dependent inventory and order lines), received stores with a duplicate phone number are skipped, and store ratings are clamped into the valid 1–5 range.
+
+**`INVENTORY` and stores.** Every inventory row — ours and the imported ones — is attached to an existing store using a round-robin distribution, so the `StoreID` link is always valid.
+
+**Part 5 - Locking the schema.** Once data is in place, columns are made `NOT NULL` where the data allows it, and the new foreign keys (`fk_product_category`, `fk_product_supplier`, `fk_order_customer`, `fk_inventory_store`) and the order-ownership check are added.
+
+---
+
+### Step 7 - Data Verification
+
+After running `Integrate.sql`, every table holds data from **both** original databases. The screenshots below show the database state **before** and **after** the integration:
+
+| Before Integration | After Integration |
+| :---: | :---: |
+| ![Before Integration](images/Stage%203/before_integration.png) | ![After Integration](images/Stage%203/after_integration.png) |
+
+We also re-executed the **Phase 2 queries** on the integrated database to confirm that the schema changes did not break any existing query — they all still run correctly on the unified data.
+
+---
+
+### Step 8 - Backup (backup3)
+
+A complete, updated SQL dump of the **integrated database** was generated. It captures the final unified schema together with the merged data from both teams, and guarantees that the integrated system can be fully restored.
+
+- 💾 **Integrated Database Backup:** [backup3.sql](Stage%203/backup3.sql)
+
+---
+
+### Views
+
+As required, we wrote **two views** — one from the perspective of each original department — plus **two queries per view**. Both views combine two tables with a `JOIN`, and neither is a plain field extraction.
+
+- 📜 **Views script:** [Views.sql](Stage%203/Views.sql)
+
+#### View 1 — `company_fleet_summary` *(our original department)*
+
+**Description:** For each delivery company, this view summarises its truck fleet — total number of trucks, number of active trucks, and total / average hauling capacity. It **joins** `DELIVERYCOMPAGNY` with `TRUCK` and groups the result per company.
+
+```sql
+CREATE VIEW company_fleet_summary AS
+SELECT d.DeliveryCieID,
+       d.DeliveryCieName,
+       COUNT(t.DriverID)                             AS total_trucks,
+       SUM(CASE WHEN t.Active = 1 THEN 1 ELSE 0 END) AS active_trucks,
+       SUM(t.Capacity)                               AS total_capacity,
+       ROUND(AVG(t.Capacity), 2)                     AS avg_capacity
+FROM DELIVERYCOMPAGNY d
+JOIN TRUCK t ON t.DeliveryCieID = d.DeliveryCieID
+GROUP BY d.DeliveryCieID, d.DeliveryCieName;
+```
+
+**Data from the view (`SELECT * FROM company_fleet_summary`):**
+
+![View 1 - SELECT *](images/Stage%203/View1.png)
+
+**Query 1.1 — Largest fleets.** Delivery companies that operate at least 3 trucks, ordered by the largest total hauling capacity first.
+```sql
+SELECT *
+FROM company_fleet_summary
+WHERE total_trucks >= 3
+ORDER BY total_capacity DESC;
+```
+![Query 1.1 Result](images/Stage%203/Query1.1.png)
+
+**Query 1.2 — Fleet size vs. coverage.** Compares each company's fleet size with the number of regions it serves, using the additional table `DELIVERYCOMPAGNY_REGIONSERVED`.
+```sql
+SELECT f.DeliveryCieName,
+       f.total_trucks,
+       f.active_trucks,
+       COUNT(r.RegionServed) AS regions_covered
+FROM company_fleet_summary f
+JOIN DELIVERYCOMPAGNY_REGIONSERVED r
+  ON r.DeliveryCieID = f.DeliveryCieID
+GROUP BY f.DeliveryCieName, f.total_trucks, f.active_trucks
+ORDER BY regions_covered DESC;
+```
+![Query 1.2 Result](images/Stage%203/Query1.2.png)
+
+#### View 2 — `customer_order_summary` *(the received department)*
+
+**Description:** For each customer, this view summarises their ordering activity — number of orders placed, total amount spent, and average order value. It **joins** `CUSTOMER` (a received table) with `ORDER` using a `LEFT JOIN`, so that customers who never ordered still appear with zero values.
+
+```sql
+CREATE VIEW customer_order_summary AS
+SELECT c.CustomerID,
+       c.CustomerName,
+       c.City,
+       COUNT(o.OrderId)                    AS total_orders,
+       COALESCE(SUM(o.Price), 0)           AS total_spent,
+       COALESCE(ROUND(AVG(o.Price), 2), 0) AS avg_order_value
+FROM CUSTOMER c
+LEFT JOIN "ORDER" o ON o.CustomerID = c.CustomerID
+GROUP BY c.CustomerID, c.CustomerName, c.City;
+```
+
+**Data from the view (`SELECT * FROM customer_order_summary`):**
+
+![View 2 - SELECT *](images/Stage%203/View2.png)
+
+**Query 2.1 — Top customers.** The ten customers who spent the most money overall (only customers who placed at least one order).
+```sql
+SELECT *
+FROM customer_order_summary
+WHERE total_orders > 0
+ORDER BY total_spent DESC
+LIMIT 10;
+```
+![Query 2.1 Result](images/Stage%203/Query2.1.png)
+
+**Query 2.2 — Revenue per city.** Total amount spent by all customers of each city, with how many customers contribute to it, ranked from the highest revenue to the lowest.
+```sql
+SELECT City,
+       COUNT(*)         AS customers_in_city,
+       SUM(total_spent) AS city_revenue
+FROM customer_order_summary
+GROUP BY City
+ORDER BY city_revenue DESC;
+```
+![Query 2.2 Result](images/Stage%203/Query2.2.png)
