@@ -49,7 +49,7 @@ The **Logistics Management System** is designed to efficiently manage the comple
 
 | Dashboard Overview | Inventory Management | Order Tracking | Delivery Schedule |
 | :---: | :---: | :---: | :---: |
-| ![AI Studio 1](images/Stage 1/GoogleAI1.png) | ![AI Studio 2](images/Stage 1/GoogleAI2.png) | ![AI Studio 3](images/Stage 1/GoogleAI3.png) | ![AI Studio 4](images/Stage 1/GoogleAI4.png) |
+| ![AI Studio 1](images/Stage%201/GoogleAI1.png) | ![AI Studio 2](images/Stage%201/GoogleAI2.png) | ![AI Studio 3](images/Stage%201/GoogleAI3.png) | ![AI Studio 4](images/Stage%201/GoogleAI4.png) |
 
 ### ERD (Entity-Relationship Diagram)
 The ERD illustrates the logical architecture of the database, showing how Stores, Warehouses, and Trucks interact.
@@ -80,7 +80,7 @@ For dynamic entities requiring specific logic (like unique store IDs or formatte
 #### 3. Mockaroo (Synthetic Data)
 To simulate a high volume of transactions and products, we used [Mockaroo](https://www.mockaroo.com/). This was essential for populating the `PRODUCT` and `CONTAINS` tables with valid dates and price ranges.
 
-![Mockaroo Setup](images/Stage 1/Mockaroo.png)
+![Mockaroo Setup](images/Stage%201/Mockaroo.png)
 
 ---
 
