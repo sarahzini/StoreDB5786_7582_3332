@@ -49,7 +49,7 @@ The **Logistics Management System** is designed to efficiently manage the comple
 
 | Dashboard Overview | Inventory Management | Order Tracking | Delivery Schedule |
 | :---: | :---: | :---: | :---: |
-| ![AI Studio 1](images/Stage1/GoogleAI1.png) | ![AI Studio 2](images/Stage1/GoogleAI2.png) | ![AI Studio 3](images/Stage1/GoogleAI3.png) | ![AI Studio 4](images/Stage1/GoogleAI4.png) |
+| ![AI Studio 1](images/Stage 1/GoogleAI1.png) | ![AI Studio 2](images/Stage 1/GoogleAI2.png) | ![AI Studio 3](images/Stage 1/GoogleAI3.png) | ![AI Studio 4](images/Stage 1/GoogleAI4.png) |
 
 ### ERD (Entity-Relationship Diagram)
 The ERD illustrates the logical architecture of the database, showing how Stores, Warehouses, and Trucks interact.
@@ -80,7 +80,7 @@ For dynamic entities requiring specific logic (like unique store IDs or formatte
 #### 3. Mockaroo (Synthetic Data)
 To simulate a high volume of transactions and products, we used [Mockaroo](https://www.mockaroo.com/). This was essential for populating the `PRODUCT` and `CONTAINS` tables with valid dates and price ranges.
 
-![Mockaroo Setup](images/Stage1/Mockaroo.png)
+![Mockaroo Setup](images/Stage 1/Mockaroo.png)
 
 ---
 
@@ -90,7 +90,7 @@ Data safety is guaranteed through a complete SQL dump of the database.
 
 We successfully performed a database restore to verify data persistence. The image below confirms the `contains` table was fully recovered in the pgAdmin environment:
 
-![Restore Confirmation](images/Stage1/Restore.png)
+![Restore Confirmation](images/Stage 1/Restore.png)
 
 
 
@@ -643,21 +643,20 @@ The received database is a **retail / orders system**: customers, product catego
 
 ---
 
-### Step 1 - Reverse Engineering: from SQL to ERD
+### Step 1 - Reverse Engineering: from SQL to ERD and DSD
 
 We received two files from the other team: their **`createTables.sql`** script and a **database backup**. They serve two different purposes in our workflow:
 
-- the **`createTables.sql`** script is the input read by our reverse-engineering algorithm to rebuild their ERD — this is the step described below;
+- the **`createTables.sql`** script is the input read by our reverse-engineering algorithm to automatically rebuild their ERD and DSD — this is the step described below;
 - the **database backup** (`backup2_01_25_26.sql`) is used only later, to restore their actual data into pgAdmin inside a separate `db2` schema (see Step 6).
 
-The assignment requires a **reverse-engineering algorithm**: a documented procedure that takes the received system's tables and produces its ERD. We implemented this algorithm as a Python program.
+The assignment requires a **reverse-engineering algorithm**: a documented procedure that takes the received system's tables and produces its conceptual and logical diagrams. We implemented this algorithm as a single Python program that generates **both images simultaneously**.
 
 - 🐍 **Algorithm code:** [txt_to_graphviz.py](Stage%203/txt_to_graphviz.py)
-- 📄 **Generated diagram description:** [code_graphviz.txt](Stage%203/code_graphviz.txt)
 
 #### How the algorithm works
 
-The program reads the received `createTables.sql` file and rebuilds the ERD step by step:
+The program reads the received `createTables.sql` file and rebuilds the diagrams step by step:
 
 **1. Parse the SQL.** Comments are stripped, then a regular expression isolates every `CREATE TABLE name ( ... );` block.
 
@@ -666,33 +665,31 @@ The program reads the received `createTables.sql` file and rebuilds the ERD step
 - the **foreign-key** columns and the table each one references (from `FOREIGN KEY (...) REFERENCES ...`);
 - the remaining **normal columns**.
 
-**3. Apply the reverse-engineering rules** — this is the core logic that turns a physical schema back into a conceptual diagram:
+**3. Apply the reverse-engineering rules** — the core logic that turns a physical schema back into conceptual rules:
+- A foreign-key column that is **part of the primary key** creates an **identifying relationship** (the table becomes a **weak entity**).
+- A column **without** `NOT NULL` becomes an **optional attribute**, marked `(O)`.
+- A foreign-key column **not** in the primary key becomes a normal **N : 1 relationship**.
+- A `PRIMARY KEY` column becomes a **key attribute** (underlined).
 
-| What is found in the SQL | What it becomes in the ERD |
-| --- | --- |
-| A foreign-key column that is **part of the primary key** | An **identifying relationship** → the table is a **weak entity** (drawn with a double rectangle) |
-| A column **without** `NOT NULL` | An **optional attribute**, marked `(O)` and drawn with a dashed ellipse |
-| A foreign-key column **not** in the primary key | A normal **N : 1 relationship** (the table holding the FK is the "many" side, the referenced table is the "one" side) |
-| A `PRIMARY KEY` column | A **key attribute**, drawn underlined |
+**4. Build the diagrams (DOT Language).** The script translates these rules into two separate Graphviz descriptions:
+- **For the ERD:** Uses `neato` layout and Chen notation (rectangles for entities, ellipses for attributes, diamonds for relationships).
+- **For the DSD:** Uses `dot` layout and generates HTML-like tables strictly mirroring the **ERDPlus** style (primary keys placed above a separator line, foreign keys tagged with `[FK]`, and orthogonal relationship arrows).
 
-**4. Build the diagram.** Entities are laid out on a grid; each entity's attributes are placed in a circular "crown" around it; every relationship becomes a diamond connecting two entities, labelled with its cardinalities (`N` and `1`).
-
-**5. Render the image.** The algorithm produces a Graphviz description in **Chen notation** (rectangles = entities, ellipses = attributes, diamonds = relationships) and sends it to a public Graphviz rendering service, which returns the final PNG.
+**5. Render the images.** The algorithm sends both DOT codes to a public Graphviz API (`quickchart.io/graphviz`), which automatically downloads and saves the final PNG images directly into our project folder.
 
 #### Result — ERD of the received department
 
-Running the algorithm on the received `createTables.sql` produced `erd_new.png`:
+Running the script automatically produced `erd_schema.png`:
 
-![ERD of the New Department (reverse engineered)](Stage%203/erd_new.png)
+![ERD of the New Department (reverse engineered)](Stage%203/erd_schema.png)
 
 ---
 
 ### Step 2 - DSD of the Received Department
 
-Once the ERD was reverse-engineered, we drew the **DSD of the received department** manually — the physical schema corresponding to their 8 tables (`customer`, `category`, `supplier`, `product`, `orders`, `orderitem`, `inventory`, `store`):
+Thanks to our Python script, the **DSD (Relational Schema)** of the received department (their 8 tables: `customer`, `category`, `supplier`, `product`, `orders`, `orderitem`, `inventory`, `store`) was generated automatically alongside the ERD, perfectly formatted for our report:
 
 ![DSD of the New Department](Stage%203/dsd_new.png)
-
 ---
 
 ### Step 3 - The Two ERDs
