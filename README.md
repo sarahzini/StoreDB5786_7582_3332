@@ -75,7 +75,7 @@ Static reference data, such as warehouse locations and fixed regional codes, wer
 
 #### 2. Automated Python Generation
 For dynamic entities requiring specific logic (like unique store IDs or formatted phone numbers starting with "02"), we used Python scripts. This allowed for the generation of 300+ unique stores with professional naming conventions.
-- 🐍 **Script:** `Stage 1/Programing/generator.py`
+- 🐍 **Script:** [generator.py](Stage%201/Programing/generator.py)
 
 #### 3. Mockaroo (Synthetic Data)
 To simulate a high volume of transactions and products, we used [Mockaroo](https://www.mockaroo.com/). This was essential for populating the `PRODUCT` and `CONTAINS` tables with valid dates and price ranges.
