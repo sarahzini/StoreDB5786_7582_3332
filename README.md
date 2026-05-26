@@ -90,7 +90,7 @@ Data safety is guaranteed through a complete SQL dump of the database.
 
 We successfully performed a database restore to verify data persistence. The image below confirms the `contains` table was fully recovered in the pgAdmin environment:
 
-![Restore Confirmation](images/Stage 1/Restore.png)
+![Restore Confirmation](images/Stage%201/Restore.png)
 
 
 
@@ -661,27 +661,30 @@ The program reads the received `createTables.sql` file and rebuilds the diagrams
 **1. Parse the SQL.** Comments are stripped, then a regular expression isolates every `CREATE TABLE name ( ... );` block.
 
 **2. Extract the structure of each table.** For every table the algorithm collects:
-- the **primary-key** columns (from a `PRIMARY KEY (...)` clause or an inline declaration);
-- the **foreign-key** columns and the table each one references (from `FOREIGN KEY (...) REFERENCES ...`);
-- the remaining **normal columns**.
+* the **primary-key** columns (from a `PRIMARY KEY (...)` clause or an inline declaration);
+* the **foreign-key** columns and the table each one references (from `FOREIGN KEY (...) REFERENCES ...`);
+* the remaining **normal columns**.
 
-**3. Apply the reverse-engineering rules** — the core logic that turns a physical schema back into conceptual rules:
-- A foreign-key column that is **part of the primary key** creates an **identifying relationship** (the table becomes a **weak entity**).
-- A column **without** `NOT NULL` becomes an **optional attribute**, marked `(O)`.
-- A foreign-key column **not** in the primary key becomes a normal **N : 1 relationship**.
-- A `PRIMARY KEY` column becomes a **key attribute** (underlined).
+**3. Apply the reverse-engineering rules** — this is the core logic that turns a physical schema back into a conceptual diagram:
+
+| What is found in the SQL | What it becomes in the ERD / DSD |
+| :--- | :--- |
+| A foreign-key column that is **part of the primary key** | An **identifying relationship** → the table is a **weak entity** (drawn with a double rectangle in ERD) |
+| A column **without** `NOT NULL` | An **optional attribute**, marked `(O)` |
+| A foreign-key column **not** in the primary key | A normal **N : 1 relationship** (the table holding the FK is the "many" side, the referenced table is the "one" side) |
+| A `PRIMARY KEY` column | A **key attribute**, drawn underlined |
 
 **4. Build the diagrams (DOT Language).** The script translates these rules into two separate Graphviz descriptions:
-- **For the ERD:** Uses `neato` layout and Chen notation (rectangles for entities, ellipses for attributes, diamonds for relationships).
-- **For the DSD:** Uses `dot` layout and generates HTML-like tables strictly mirroring the **ERDPlus** style (primary keys placed above a separator line, foreign keys tagged with `[FK]`, and orthogonal relationship arrows).
+* **For the ERD:** Uses Chen notation (rectangles for entities, ellipses for attributes, diamonds for relationships).
+* **For the DSD:** Generates HTML-like tables mirroring the **ERDPlus** style (primary keys placed above a separator line, foreign keys tagged with `[FK]`).
 
 **5. Render the images.** The algorithm sends both DOT codes to a public Graphviz API (`quickchart.io/graphviz`), which automatically downloads and saves the final PNG images directly into our project folder.
 
 #### Result — ERD of the received department
 
-Running the script automatically produced `erd_schema.png`:
+Running the script automatically produced `erd_new.png`:
 
-![ERD of the New Department (reverse engineered)](Stage%203/erd_schema.png)
+![ERD of the New Department (reverse engineered)](Stage%203/erd_new.png)
 
 ---
 
