@@ -30,6 +30,14 @@ Project by **Sara Heymann 2254681 and Sarah Sebaoun 345887582**
   - [Step 7 - Data Verification](#step-7---data-verification)
   - [Step 8 - Backup (backup3)](#step-8---backup-backup3)
   - [Views](#views)
+- [Phase 4: Programming (PL/pgSQL)](#phase-4-programming-plpgsql)
+  - [Introduction](#phase-4-introduction)
+  - [1. Functions](#1-functions)
+  - [2. Procedures](#2-procedures)
+  - [3. Triggers](#3-triggers)
+  - [4. Main Programs](#4-main-programs)
+  - [5. Backup](#5-backup)
+
 
 ---
 
@@ -876,3 +884,662 @@ GROUP BY City
 ORDER BY city_revenue DESC;
 ```
 ![Query 2.2 Result](images/Stage%203/Query2.2.png)
+
+---
+ 
+## Phase 4: Programming (PL/pgSQL)
+ 
+### Phase 4 Introduction
+In this phase, we implemented advanced business logic directly inside the PostgreSQL database using **PL/pgSQL**. The goal was to create non-trivial programs that bridge our Logistics (Rami Levy) and Retail systems.
+ 
+This section includes **functions**, **procedures**, **triggers**, and **main programs** that utilize complex programming elements such as explicit/implicit cursors, Ref Cursors, records, loops, branching (IF/ELSE), exception handling, and DML operations.
+ 
+---
+ 
+### 1. Functions
+ 
+#### Function 1: Predictive Stock Depletion Algorithm (`generate_predictive_restock_plan`)
+ 
+**Description:** Instead of a standard low-stock alert, this function acts as a **predictive algorithm**. It calculates the sales velocity of each product in a specific store over the last 30 days and predicts exactly how many days are left before a stockout. It then assigns a dynamic alert level (`CRITICAL`, `WARNING`, `BELOW MIN STOCK`, or `SAFE`).
+ 
+**Elements used:**
+- **[a]** Explicit Cursor (`cur_inventory`) to loop through inventory + Implicit Cursor (`SELECT INTO`) for sales aggregation
+- **[b]** Returns a **Ref Cursor** (`v_report_cursor`)
+- **[c]** DML — creates a `TEMP` table and performs mass `INSERT`
+- **[d]** Branching (`IF/ELSIF/ELSE`) to prevent division by zero and assign alert levels
+- **[e]** `LOOP / FETCH / EXIT` for cursor iteration
+- **[f]** Exception handling — business exception if store doesn't exist + global catch
+- **[g]** Records (`RECORD` type to hold current inventory row)
+**Source Code:**
+```sql
+CREATE OR REPLACE FUNCTION generate_predictive_restock_plan(p_store_id INT)
+RETURNS refcursor
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_report_cursor refcursor;
+    v_store_check INT;
+    v_total_sold INT;
+    v_daily_velocity NUMERIC(10,2);
+    v_days_left INT;
+    v_alert_level VARCHAR(20);
+    v_days_history INT := 30;
+    v_prod_record RECORD;
+ 
+    cur_inventory CURSOR FOR
+        SELECT i.ProductID, p.ProductName, i.Quantity, i.MinimumStock
+        FROM INVENTORY i
+        JOIN PRODUCT p ON i.ProductID = p.ProductID
+        WHERE i.StoreID = p_store_id;
+BEGIN
+    SELECT StoreID INTO v_store_check FROM STORE WHERE StoreID = p_store_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Error: Store ID % does not exist in the database.', p_store_id;
+    END IF;
+ 
+    DROP TABLE IF EXISTS temp_stock_prediction;
+    CREATE TEMP TABLE temp_stock_prediction (
+        ProductID INT, ProductName VARCHAR, CurrentStock INT, MinimumStock INT,
+        DailyVelocity NUMERIC(10,2), DaysUntilEmpty INT, AlertLevel VARCHAR
+    );
+ 
+    OPEN cur_inventory;
+    LOOP
+        FETCH cur_inventory INTO v_prod_record;
+        EXIT WHEN NOT FOUND;
+ 
+        SELECT COALESCE(SUM(c.Quantity), 0) INTO v_total_sold
+        FROM "ORDER" o
+        JOIN CONTAINS c ON o.OrderId = c.OrderId
+        WHERE o.StoreID = p_store_id
+          AND c.ProductID = v_prod_record.ProductID
+          AND o.OrderDate >= CURRENT_DATE - v_days_history;
+ 
+        IF v_total_sold > 0 THEN
+            v_daily_velocity := v_total_sold::NUMERIC / v_days_history;
+            v_days_left := ROUND(v_prod_record.Quantity / NULLIF(v_daily_velocity, 0));
+        ELSE
+            v_daily_velocity := 0;
+            v_days_left := 9999;
+        END IF;
+ 
+        IF v_days_left <= 3 THEN
+            v_alert_level := 'CRITICAL';
+        ELSIF v_days_left <= 7 THEN
+            v_alert_level := 'WARNING';
+        ELSIF v_prod_record.Quantity < v_prod_record.MinimumStock THEN
+            v_alert_level := 'BELOW MIN STOCK';
+        ELSE
+            v_alert_level := 'SAFE';
+        END IF;
+ 
+        INSERT INTO temp_stock_prediction
+        VALUES (v_prod_record.ProductID, v_prod_record.ProductName, v_prod_record.Quantity,
+                v_prod_record.MinimumStock, v_daily_velocity, v_days_left, v_alert_level);
+    END LOOP;
+    CLOSE cur_inventory;
+ 
+    OPEN v_report_cursor FOR SELECT * FROM temp_stock_prediction ORDER BY DaysUntilEmpty ASC;
+    RETURN v_report_cursor;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'System error: %', SQLERRM;
+        RAISE;
+END;
+$$;
+```
+ 
+**How to test:**
+```sql
+BEGIN;
+SELECT generate_predictive_restock_plan(1);
+-- Note the portal name returned (e.g., "<unnamed portal 1>")
+FETCH ALL IN "<unnamed portal 1>";
+--and then commit to see the changes in the temp table
+COMMIT;
+```
+
+**Proof of Execution:**
+ 
+*Success Execution (Ref Cursor returning stock predictions):*
+ 
+![Function 1 - Execution](images/Stage%204/Function1_execution.png)
+![Function1 - Testing result ](images/Stage%204/Function1_result.png)
+ 
+*Exception Handling (Invalid Store ID):*
+
+```sql
+SELECT generate_predictive_restock_plan(99999);
+--testing with a store that does not exist
+```
+ 
+![Function 1 - Exception](images/Stage%204/Function1_exception.png)
+ 
+---
+ 
+#### Function 2: Fleet Loading Optimizer (`optimize_fleet_loading`)
+ 
+**Description:** This function automates the assignment of pending orders to delivery trucks. It acts like **"Logistics Tetris"** — iterating through the active trucks of a delivery company (ordered by capacity) and filling each one with unassigned orders until it reaches maximum capacity.
+ 
+**Elements used:**
+- **[a]** Explicit Cursor (`cur_active_trucks`) for trucks + Implicit Cursor (`FOR` loop) for orders
+- **[b]** Returns a **Ref Cursor** (`v_manifest_cursor`)
+- **[c]** Multiple DML — `UPDATE` on the real `ORDER` table + `INSERT` into a temp manifest
+- **[d]** Branching (`IF/ELSE`) to enforce truck capacity constraints
+- **[e]** Nested loops — outer loop for trucks, inner `FOR` loop for orders
+- **[f]** Exception handling — business exception for invalid company + `unique_violation` catch
+- **[g]** Records (`RECORD` types for truck and order rows)
+**Source Code:**
+```sql
+CREATE OR REPLACE FUNCTION optimize_fleet_loading(p_delivery_cie_id INT)
+RETURNS refcursor
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_manifest_cursor refcursor;
+    v_cie_check INT;
+    v_current_truck_load INT;
+    v_total_assigned INT := 0;
+    v_truck_record RECORD;
+    v_order_record RECORD;
+ 
+    cur_active_trucks CURSOR FOR
+        SELECT DriverID, Capacity FROM TRUCK
+        WHERE DeliveryCieID = p_delivery_cie_id AND Active = 1
+        ORDER BY Capacity DESC;
+BEGIN
+    SELECT DeliveryCieID INTO v_cie_check FROM DELIVERYCOMPAGNY WHERE DeliveryCieID = p_delivery_cie_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Operation cancelled: Delivery company % does not exist.', p_delivery_cie_id;
+    END IF;
+ 
+    DROP TABLE IF EXISTS temp_loading_manifest;
+    CREATE TEMP TABLE temp_loading_manifest (
+        DriverID INT, AssignedOrderID INT, TruckCapacity INT, AssignmentTime TIMESTAMP
+    );
+ 
+    OPEN cur_active_trucks;
+    LOOP
+        FETCH cur_active_trucks INTO v_truck_record;
+        EXIT WHEN NOT FOUND;
+ 
+        v_current_truck_load := 0;
+        FOR v_order_record IN
+            SELECT OrderId FROM "ORDER" WHERE DriverID IS NULL ORDER BY OrderDate ASC
+        LOOP
+            IF v_current_truck_load < v_truck_record.Capacity THEN
+                UPDATE "ORDER" SET DriverID = v_truck_record.DriverID WHERE OrderId = v_order_record.OrderId;
+                INSERT INTO temp_loading_manifest
+                VALUES (v_truck_record.DriverID, v_order_record.OrderId, v_truck_record.Capacity, CURRENT_TIMESTAMP);
+                v_current_truck_load := v_current_truck_load + 1;
+                v_total_assigned := v_total_assigned + 1;
+            ELSE
+                EXIT;
+            END IF;
+        END LOOP;
+    END LOOP;
+    CLOSE cur_active_trucks;
+ 
+    IF v_total_assigned = 0 THEN
+        RAISE NOTICE 'No orders assigned.';
+    END IF;
+ 
+    OPEN v_manifest_cursor FOR SELECT * FROM temp_loading_manifest ORDER BY DriverID, AssignedOrderID;
+    RETURN v_manifest_cursor;
+EXCEPTION
+    WHEN unique_violation THEN
+        RAISE EXCEPTION 'Duplication error during assignment.';
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Algorithm error: %', SQLERRM;
+END;
+$$;
+```
+ 
+**How to test:**
+```sql
+BEGIN;
+SELECT optimize_fleet_loading(1);
+-- Note the portal name returned (e.g., "<unnamed portal 2>")
+FETCH ALL IN "<unnamed portal 2>";
+COMMIT;
+```
+ 
+**Proof of Execution:**
+ 
+*Success Execution (Manifest showing capacity distribution):*
+ 
+![Function 2 - Execution](images/Stage%204/Function2_execution.png)
+![Function2 - Testing Result](images/Stage%204/Function2_result.png)
+ 
+*Exception Handling (Invalid Company ID):*
+ 
+```sql
+SELECT optimize_fleet_loading(99999);
+--testing with a company that does not exist
+```
+ 
+![Function 2 - Exception](images/Stage%204/Function2_exception.png)
+ 
+---
+ 
+### 2. Procedures
+ 
+#### Procedure 1: Emergency Inter-Store Inventory Transfer (`process_store_inventory_transfer`)
+ 
+**Description:** This procedure acts as a **safety protocol** to balance stock between stores. When a store urgently needs a product, it automatically identifies another store with the most excess stock of that exact product and safely transfers the requested quantity — ensuring the source store never drops below its required minimum stock level.
+ 
+**Elements used:**
+- **[a]** Implicit Cursor (`SELECT INTO`) to find the optimal source store
+- **[c]** Multiple DML — `UPDATE` source store (deduct) + `UPDATE` target store (add)
+- **[d]** Branching (`IF/ELSE`) to validate stock availability before transfer
+- **[f]** Exception handling — business exception if product missing or no surplus store + global `ROLLBACK`
+- **[g]** Records (`RECORD` type to hold source store data)
+**Source Code:**
+```sql
+CREATE OR REPLACE PROCEDURE process_store_inventory_transfer(
+    p_product_id INT,
+    p_target_store_id INT,
+    p_transfer_qty INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_source_store RECORD;
+    v_product_exists INT;
+BEGIN
+    -- Business Exception: Check if the product exists
+    SELECT ProductID INTO v_product_exists FROM PRODUCT WHERE ProductID = p_product_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Transfer cancelled: Product % does not exist.', p_product_id;
+    END IF;
+ 
+    -- Implicit cursor: Find the best source store (most excess stock)
+    SELECT StoreID, Quantity INTO v_source_store
+    FROM INVENTORY
+    WHERE ProductID = p_product_id
+      AND StoreID != p_target_store_id
+      AND Quantity >= (MinimumStock + p_transfer_qty)
+    ORDER BY Quantity DESC
+    LIMIT 1;
+ 
+    IF v_source_store.StoreID IS NULL THEN
+        RAISE EXCEPTION 'Failed: No store has enough excess stock for product %.', p_product_id;
+    ELSE
+        -- DML 1: Deduct from source store
+        UPDATE INVENTORY
+        SET Quantity = Quantity - p_transfer_qty
+        WHERE ProductID = p_product_id AND StoreID = v_source_store.StoreID;
+ 
+        -- DML 2: Add to target store
+        UPDATE INVENTORY
+        SET Quantity = Quantity + p_transfer_qty
+        WHERE ProductID = p_product_id AND StoreID = p_target_store_id;
+ 
+        RAISE NOTICE 'SUCCESS: % units of product % transferred from Store % to Store %.',
+                     p_transfer_qty, p_product_id, v_source_store.StoreID, p_target_store_id;
+    END IF;
+ 
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'An unexpected error occurred: %', SQLERRM;
+        ROLLBACK;
+END;
+$$;
+```
+ 
+**How to test:**
+```sql
+-- Success case
+CALL process_store_inventory_transfer(1, 5, 20);
+ 
+-- Exception case (product doesn't exist)
+CALL process_store_inventory_transfer(1,1,99999);
+```
+ 
+**Proof of Execution:**
+![Procedure 1 - Creation ](images/Stage%204/Procedure1-creation.png)
+
+
+![Procedure 1 - Execution](images/Stage%204/Procedure1_execution.png)
+
+![Procedure 1 - Before Execution ](images/Stage%204/Procedure1_before.png)
+
+![Procedure1 - After Execution ](images/Stage%204/Procedure1_after.png)
+ 
+*Exception Handling (No store with sufficient stock ):*
+ 
+![Procedure 1 - Exception](images/Stage%204/Procedure1_exception.png)
+ 
+
+---
+ 
+#### Procedure 2: End-of-Month Customer Loyalty & Cleanup Batch (`monthly_customer_loyalty_batch`)
+ 
+> **⚠️ Schema Prerequisite:** Before running this procedure, execute the following `ALTER TABLE` command to add the `LoyaltyTier` column to the `CUSTOMER` table:
+> ```sql
+> ALTER TABLE CUSTOMER ADD COLUMN IF NOT EXISTS LoyaltyTier VARCHAR(20) DEFAULT 'Standard';
+> ```
+ 
+**Description:** This maintenance procedure is designed to run automatically at the **end of each month**. It iterates through the entire customer database, calculates each customer's total historical spending, and updates their `LoyaltyTier` (`VIP Gold`, `Premium`, or `Standard`). It also performs a routine **database cleanup** by deleting old cancelled orders to optimize storage.
+ 
+**Elements used:**
+- **[a]** Explicit Cursor (`cur_customers`) to iterate all customers + Implicit Cursor (`SELECT INTO`) for spending aggregation
+- **[c]** Massive DML — bulk `UPDATE` for loyalty tiers + bulk `DELETE` for cleanup
+- **[d]** Branching (`IF/ELSIF/ELSE`) for tier classification logic
+- **[e]** `LOOP / FETCH / EXIT` for cursor iteration
+- **[f]** Global exception handling with safe `ROLLBACK` for incomplete batches
+**Source Code:**
+```sql
+CREATE OR REPLACE PROCEDURE monthly_customer_loyalty_batch()
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    cur_customers CURSOR FOR SELECT CustomerID FROM CUSTOMER;
+    v_customer_id INT;
+    v_total_spent NUMERIC;
+    v_new_tier VARCHAR(20);
+BEGIN
+    OPEN cur_customers;
+    LOOP
+        FETCH cur_customers INTO v_customer_id;
+        EXIT WHEN NOT FOUND;
+ 
+        -- Implicit cursor: Calculate total spending per customer
+        SELECT COALESCE(SUM(Price), 0) INTO v_total_spent
+        FROM "ORDER"
+        WHERE CustomerID = v_customer_id;
+ 
+        -- Branching: Assign loyalty tier based on spending
+        IF v_total_spent >= 5000 THEN
+            v_new_tier := 'VIP Gold';
+        ELSIF v_total_spent >= 1000 THEN
+            v_new_tier := 'Premium';
+        ELSE
+            v_new_tier := 'Standard';
+        END IF;
+ 
+        -- DML 1: Update the customer's loyalty tier
+        UPDATE CUSTOMER
+        SET LoyaltyTier = v_new_tier
+        WHERE CustomerID = v_customer_id;
+ 
+    END LOOP;
+    CLOSE cur_customers;
+ 
+    -- DML 2: Cleanup — delete old cancelled orders (> 1 year)
+    DELETE FROM "ORDER"
+    WHERE Status = 'Cancelled' AND OrderDate < CURRENT_DATE - INTERVAL '1 year';
+ 
+    RAISE NOTICE 'SUCCESS: End-of-month batch completed. Loyalty tiers updated and old cancelled orders removed.';
+ 
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Batch process failed due to an unexpected error: %', SQLERRM;
+        ROLLBACK;
+END;
+$$;
+```
+ 
+**How to test:**
+```sql
+-- Run the batch
+CALL monthly_customer_loyalty_batch();
+ 
+-- Verify loyalty tiers were assigned
+SELECT CustomerID, CustomerName, LoyaltyTier FROM CUSTOMER LIMIT 20;
+```
+ 
+**Proof of Execution:**
+ 
+![Procedure 2 - Creation ](images/Stage%204/Procedure2-creation.png)
+
+![Procedure 2 - Execution](images/Stage%204/Procedure2_execution.png)
+
+![Procedure 2 - Before Execution ](images/Stage%204/Procedure2_before.png)
+
+![Procedure 2 - After Execution ](images/Stage%204/Procedure2_after.png)
+ 
+ 
+---
+### 3. Triggers
+
+#### Trigger 1: Fleet Emergency Reassignment (ON UPDATE)
+
+**Description:** This trigger simulates a real-world logistics crisis. When a truck breaks down and its `Active` status is changed from `1` to `0`, this trigger automatically unassigns that driver from ALL pending orders. This prevents orders from being stuck and frees them up to be reassigned by the fleet optimizer function.
+**Elements used:**
+- Fires `AFTER UPDATE` on the `TRUCK` table.
+- **[d]** Branching (`IF`) to only act when the status specifically changes from 1 to 0 (`OLD.Active = 1 AND NEW.Active = 0`).
+- **[c]** Massive DML (`UPDATE`) on the `"ORDER"` table to remove the driver.
+- **[f]** Exception handling to catch and log any unexpected failures.
+
+**Source Code:**
+```sql
+CREATE OR REPLACE FUNCTION fn_fleet_emergency_reassignment()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_orders_freed INT;
+BEGIN
+    -- Only act when a truck goes from Active (1) to Inactive (0)
+    IF OLD.Active = 1 AND NEW.Active = 0 THEN
+        UPDATE "ORDER"
+        SET DriverID = NULL
+        WHERE DriverID = OLD.DriverID
+          AND DeliveryDate IS NULL;
+
+        GET DIAGNOSTICS v_orders_freed = ROW_COUNT;
+
+        RAISE NOTICE 'ALERT: Truck (DriverID=%) went offline. % pending orders have been freed for reassignment.',
+                     OLD.DriverID, v_orders_freed;
+    END IF;
+    RETURN NEW;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Fleet emergency trigger failed for DriverID %: %', OLD.DriverID, SQLERRM;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER trg_fleet_emergency_reassignment
+AFTER UPDATE OF Active ON TRUCK
+FOR EACH ROW
+EXECUTE FUNCTION fn_fleet_emergency_reassignment();
+```
+
+**How to test:**
+```sql
+-- Simulate truck breakdown for DriverID 2
+UPDATE TRUCK SET Active = 0 WHERE DriverID = 3;
+```
+
+**Proof of Execution:**
+
+*Trigger automatically freeing up orders when a truck is marked inactive:*
+
+![Trigger 1 - Execution](images/Stage%204/Trigger1_execute.png)
+![Trigger 1 - Verification](images/Stage%204/Trigger1_verify.png)
+
+---
+
+#### Trigger 2: Real-time Inventory Deduction (ON INSERT)
+
+**Description:** Simulates the core of a supermarket's point-of-sale system. Every time a product line is added to an order (`INSERT` into `CONTAINS`), this trigger automatically deducts the purchased quantity from the `INVENTORY` of the relevant store. It also guards against negative stock and raises warnings for low stock.
+**Elements used:**
+- Fires `AFTER INSERT` on the `CONTAINS` table.
+- **[a]** Implicit Cursors (`SELECT INTO`) to fetch the order's store context and current inventory.
+- **[d]** Branching (`IF`) to enforce inventory limits and trigger alerts.
+- **[c]** DML (`UPDATE`) to actively adjust the inventory quantities.
+- **[f]** Exception Handling to block the transaction if stock is insufficient.
+
+**Source Code:**
+```sql
+CREATE OR REPLACE FUNCTION fn_realtime_inventory_deduction()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_store_id     INT;
+    v_current_qty  INT;
+    v_min_stock    INT;
+BEGIN
+    SELECT StoreID INTO v_store_id FROM "ORDER" WHERE OrderId = NEW.OrderId;
+    IF v_store_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT Quantity, MinimumStock INTO v_current_qty, v_min_stock
+    FROM INVENTORY
+    WHERE ProductID = NEW.ProductID AND StoreID = v_store_id;
+
+    IF NOT FOUND THEN
+        RETURN NEW;
+    END IF;
+
+    IF v_current_qty < NEW.Quantity THEN
+        RAISE EXCEPTION 'Insufficient stock: product % has only % units in store %, but % were ordered.',
+                        NEW.ProductID, v_current_qty, v_store_id, NEW.Quantity;
+    END IF;
+
+    UPDATE INVENTORY
+    SET Quantity = Quantity - NEW.Quantity
+    WHERE ProductID = NEW.ProductID AND StoreID = v_store_id;
+
+    IF (v_current_qty - NEW.Quantity) < v_min_stock THEN
+        RAISE NOTICE 'LOW STOCK WARNING: Product % in store % is now below minimum stock.', NEW.ProductID, v_store_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE TRIGGER trg_realtime_inventory_deduction
+AFTER INSERT ON CONTAINS
+FOR EACH ROW
+EXECUTE FUNCTION fn_realtime_inventory_deduction();
+```
+
+**How to test:**
+```sql
+-- Provoking trigger2 by requesting an order that exceeds the available stock
+INSERT INTO CONTAINS (OrderId, ProductID, Quantity, SubTotal, InOnSale) 
+VALUES (1, 1, 99999, 50.00, FALSE);
+```
+
+**Proof of Execution:**
+
+*Trigger successfully deducting inventory and raising a low-stock warning:*
+
+![Trigger 2 - Execution](images/Stage%204/Trigger2_execute.png)
+![Trigger 2 - Verification](images/Stage%204/Trigger2_verify.png)
+
+---
+
+### 4. Main Programs
+
+To tie our subprograms together into practical business use-cases, we created two Main Programs (Anonymous `DO` blocks). Each program integrates exactly **one Function and one Procedure** within a unified workflow.
+
+#### Main Program 1: The Morning Dispatch
+**Business Scenario:** Executed by the logistics manager at 6:00 AM. It calls `optimize_fleet_loading` (**Function 2**) to assign all pending deliveries to available trucks, and then immediately calls `process_store_inventory_transfer` (**Procedure 1**) to resolve an overnight stock shortage before the stores open.
+
+**Source Code:**
+```sql
+DO $$
+DECLARE
+    v_manifest       refcursor;
+    v_driver_id      INT;
+    v_order_id       INT;
+    v_capacity       INT;
+    v_assigned_time  TIMESTAMP;
+    v_total_assigned INT := 0;
+BEGIN
+    RAISE NOTICE '=======================================================';
+    RAISE NOTICE ' RAMI LEVY LOGISTICS — MORNING DISPATCH';
+    RAISE NOTICE '=======================================================';
+
+    RAISE NOTICE '[STEP 1] Loading trucks for Delivery Company #1...';
+    BEGIN
+        v_manifest := optimize_fleet_loading(1);
+        LOOP
+            FETCH v_manifest INTO v_driver_id, v_order_id, v_capacity, v_assigned_time;
+            EXIT WHEN NOT FOUND;
+            v_total_assigned := v_total_assigned + 1;
+            RAISE NOTICE '  -> Driver % assigned to Order % (Truck Cap: %)', v_driver_id, v_order_id, v_capacity;
+        END LOOP;
+        CLOSE v_manifest;
+    EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'Fleet loading error: %', SQLERRM;
+    END;
+
+    RAISE NOTICE '';
+    RAISE NOTICE '[STEP 2] Resolving overnight stock alert for Store #5...';
+    BEGIN
+        CALL process_store_inventory_transfer(1, 5, 30);
+    EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'Stock transfer failed: %', SQLERRM;
+    END;
+END;
+$$;
+```
+
+**Proof of Execution:**
+
+![Main Program 1 - Output](images/Stage%204/Main1_execute.png)
+
+---
+
+#### Main Program 2: The Director's Monthly Audit
+**Business Scenario:** Run by a store director on the last day of the month. It calls `generate_predictive_restock_plan` (**Function 1**) to print a dynamic stockout risk report for the upcoming month, and then executes `monthly_customer_loyalty_batch` (**Procedure 2**) to assign VIP tiers and clean the database.
+
+**Source Code:**
+```sql
+DO $$
+DECLARE
+    v_report         refcursor;
+    v_product_id     INT;
+    v_product_name   VARCHAR;
+    v_current_stock  INT;
+    v_min_stock      INT;
+    v_daily_velocity NUMERIC;
+    v_days_left      INT;
+    v_alert_level    VARCHAR;
+    v_target_store   INT := 1;
+BEGIN
+    RAISE NOTICE '=======================================================';
+    RAISE NOTICE ' RAMI LEVY — END-OF-MONTH AUDIT — STORE #%', v_target_store;
+    RAISE NOTICE '=======================================================';
+
+    RAISE NOTICE '[STEP 1] Generating predictive stock report...';
+    BEGIN
+        v_report := generate_predictive_restock_plan(v_target_store);
+        LOOP
+            FETCH v_report INTO v_product_id, v_product_name, v_current_stock,
+                                v_min_stock, v_daily_velocity, v_days_left, v_alert_level;
+            EXIT WHEN NOT FOUND;
+            IF v_alert_level != 'SAFE' THEN
+                RAISE NOTICE '% | Stock: % | Min: % | Days Left: % | %',
+                             LEFT(v_product_name, 20), v_current_stock, v_min_stock, v_days_left, v_alert_level;
+            END IF;
+        END LOOP;
+        CLOSE v_report;
+    EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'Report generation failed: %', SQLERRM;
+    END;
+
+    RAISE NOTICE '';
+    RAISE NOTICE '[STEP 2] Running monthly customer loyalty batch...';
+    BEGIN
+        CALL monthly_customer_loyalty_batch();
+    EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'Loyalty batch failed: %', SQLERRM;
+    END;
+END;
+$$;
+```
+
+**Proof of Execution:**
+
+![Main Program 2 - Output](images/Stage%204/Main2_execute.png)
+
+---
+
+### 5. Backup
+
+A final, comprehensive SQL dump has been generated, capturing all tables, data, views, and PL/pgSQL programs (functions, procedures, and triggers) developed across all phases.
+
+- 💾 **Final Database Backup:** [backup4.sql](Stage%204/backup4.sql)

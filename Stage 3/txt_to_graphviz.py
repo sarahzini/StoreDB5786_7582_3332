@@ -269,7 +269,7 @@ def download_image(dot_code: str, output_file: str, engine: str = "neato"):
 def main():
     parser = argparse.ArgumentParser(description="Generates ERD and DSD directly from an SQL file.")
     parser.add_argument("input", help="The source SQL file (e.g., createTables.sql)")
-    parser.add_argument("--erd-image", metavar="FILE.png", default="Stage 3/erd_schema.png", help="Path to save ERD image")
+    parser.add_argument("--erd-image", metavar="FILE.png", default="Stage 3/erd_new.png", help="Path to save ERD image")
     parser.add_argument("--dsd-image", metavar="FILE.png", default="Stage 3/dsd_new.png", help="Path to save DSD image")
     args = parser.parse_args()
 
