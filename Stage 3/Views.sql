@@ -104,3 +104,5 @@ SELECT City,
 FROM customer_order_summary
 GROUP BY City
 ORDER BY city_revenue DESC;
+
+
