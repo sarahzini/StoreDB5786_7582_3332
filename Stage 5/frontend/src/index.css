@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  /* Cache la scrollbar sur les navigateurs Webkit */
+.overflow-y-auto::-webkit-scrollbar {
+  display: none;
+}
+
+/* Cache la scrollbar pour Firefox */
+.overflow-y-auto {
+  scrollbar-width: none;
+}
+}

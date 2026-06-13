@@ -50,6 +50,5 @@ volumes:
   postgres_data:
   pgadmin_data:
 
-
 networks:
   store_network:
