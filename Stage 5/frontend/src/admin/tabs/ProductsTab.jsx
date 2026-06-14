@@ -1,6 +1,7 @@
 import useTab from '../shared/useTab';
 import DataTable from '../shared/DataTable';
 import Drawer from '../shared/Drawer';
+import ConfirmModal from '../shared/ConfirmModal';
 import { Toast, Field, AddButton } from '../shared/ui';
 
 const KashrutBadge = ({ label }) => (
@@ -58,8 +59,28 @@ export default function ProductsTab() {
     return (
         <>
             {t.toast && <Toast message={t.toast.text} type={t.toast.type} onDone={() => t.setToast(null)} />}
+            {t.confirmRow && (
+                <ConfirmModal
+                    message={`Delete product "${t.confirmRow.row.productname}"? This will also remove its kashrut data and inventory entries.`}
+                    onConfirm={t.confirmDelete}
+                    onCancel={t.cancelDelete}
+                />
+            )}
             <AddButton label="Product" onClick={t.openAdd} />
-            <DataTable columns={COLUMNS} rows={t.rows} onEdit={t.openEdit} onDelete={t.handleDelete} emptyLabel="No products." />
+            <DataTable
+                columns={COLUMNS}
+                rows={t.rows}
+                onEdit={t.openEdit}
+                onDelete={t.handleDelete}
+                emptyLabel="No products."
+                loading={t.loading}
+                search={t.search}
+                onSearchChange={t.setSearch}
+                page={t.page}
+                totalPages={t.totalPages}
+                onPageChange={t.setPage}
+                totalCount={t.filteredRows.length}
+            />
             {t.drawer && (
                 <Drawer title={t.form.productid ? 'Edit Product' : 'Add Product'} onClose={t.close} onSubmit={t.handleSubmit}>
                     <Field label="Product Name" name="productname" value={t.form.productname} onChange={t.handleChange} />
@@ -73,4 +94,4 @@ export default function ProductsTab() {
             )}
         </>
     );
-}
+}

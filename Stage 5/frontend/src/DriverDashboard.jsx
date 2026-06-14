@@ -23,6 +23,11 @@ const DriverDashboard = () => {
     password: ''
   });
 
+  // Delivery filter & detail modal
+  const [deliveryFilter, setDeliveryFilter] = useState('All');
+  const [deliveryDetail, setDeliveryDetail] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
   const navItems = [
     { id: 'Overview', icon: LayoutDashboard, label: 'Overview' },
     { id: 'Deliveries', icon: Truck, label: 'My Deliveries' },
@@ -143,45 +148,139 @@ const DriverDashboard = () => {
           </div>
         );
 
-      case 'Deliveries':
+      case 'Deliveries': {
+        const STATUS_FILTERS = ['All', 'PENDING', 'IN PROGRESS', 'DELIVERED', 'COMPLETED'];
+        const filteredDeliveries = deliveryFilter === 'All'
+          ? deliveries
+          : deliveries.filter(d => d.status?.toUpperCase() === deliveryFilter);
+
         return (
-          <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-            <table className="w-full">
-              <thead className="bg-gray-50/50">
-                <tr className="border-b border-gray-50">
-                  {['Order ID', 'Date', 'Status', ''].map(h => (
-                    <th key={h} className="text-left px-6 py-4 text-[10px] font-medium text-gray-400 tracking-[0.1em] uppercase">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {deliveries.length > 0 ? deliveries.map((route, i) => (
-                  <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 text-sm font-bold text-gray-800">#{route.id}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {new Date(route.orderdate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded tracking-wide uppercase 
-                        ${route.status === 'COMPLETED' || route.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
-                          route.status === 'IN PROGRESS' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
-                            'bg-orange-50 text-orange-600 border border-orange-100'}`}>
-                        {route.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button onClick={() => openUpdateDrawer(route)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
-                        Update
-                      </button>
-                    </td>
+          <div>
+            {/* Status filter tabs */}
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
+              {STATUS_FILTERS.map(f => (
+                <button
+                  key={f}
+                  onClick={() => setDeliveryFilter(f)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    deliveryFilter === f
+                      ? 'bg-red-600 text-white border-red-600'
+                      : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {f}{f !== 'All' && ` (${deliveries.filter(d => d.status?.toUpperCase() === f).length})`}
+                </button>
+              ))}
+              <span className="text-xs text-gray-400 ml-auto">{filteredDeliveries.length} order{filteredDeliveries.length !== 1 ? 's' : ''}</span>
+            </div>
+
+            <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+              <table className="w-full">
+                <thead className="bg-gray-50/50">
+                  <tr className="border-b border-gray-50">
+                    {['Order ID', 'Date', 'Status', ''].map(h => (
+                      <th key={h} className="text-left px-6 py-4 text-[10px] font-medium text-gray-400 tracking-[0.1em] uppercase">{h}</th>
+                    ))}
                   </tr>
-                )) : (
-                  <tr><td colSpan="4" className="text-center py-8 text-gray-500 text-sm">No deliveries found.</td></tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredDeliveries.length > 0 ? filteredDeliveries.map((route, i) => (
+                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4 text-sm font-bold text-gray-800">#{route.id}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{new Date(route.orderdate).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded tracking-wide uppercase
+                          ${route.status === 'COMPLETED' || route.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' :
+                            route.status === 'IN PROGRESS' ? 'bg-blue-50 text-blue-600 border border-blue-100' :
+                            'bg-orange-50 text-orange-600 border border-orange-100'}`}>
+                          {route.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center gap-2 justify-end">
+                          <button
+                            onClick={async () => {
+                              setLoadingDetail(true);
+                              try {
+                                const res = await fetch(`http://localhost:5000/api/store/order-details/${route.id}`);
+                                const data = await res.json();
+                                setDeliveryDetail(data);
+                              } catch { showToast('error', 'Could not load details.'); }
+                              finally { setLoadingDetail(false); }
+                            }}
+                            className="text-[11px] text-gray-600 font-bold bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            {loadingDetail ? '...' : 'View →'}
+                          </button>
+                          <button onClick={() => openUpdateDrawer(route)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
+                            Update
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr><td colSpan="4" className="text-center py-8 text-gray-500 text-sm">
+                      {deliveryFilter === 'All' ? 'No deliveries found.' : `No ${deliveryFilter} deliveries.`}
+                    </td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Delivery Detail Modal */}
+            {deliveryDetail && (
+              <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                <div className="bg-white rounded-2xl shadow-2xl p-8 w-[520px] max-h-[80vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <p className="text-[10px] text-gray-400 uppercase tracking-widest font-semibold mb-0.5">Delivery Details</p>
+                      <h2 className="text-lg font-bold text-gray-900">Order #{deliveryDetail.order?.orderid}</h2>
+                    </div>
+                    <button onClick={() => setDeliveryDetail(null)} className="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-500">
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3 mb-6">
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 font-semibold">Date</p>
+                      <p className="text-sm font-semibold text-gray-800">{new Date(deliveryDetail.order?.orderdate).toLocaleDateString()}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 font-semibold">Status</p>
+                      <span className="px-2 py-0.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 text-[10px] font-semibold">{deliveryDetail.order?.status}</span>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <p className="text-[10px] text-gray-400 uppercase tracking-wider mb-1 font-semibold">Total</p>
+                      {deliveryDetail.order?.price && parseFloat(deliveryDetail.order.price) > 0
+                        ? <p className="text-sm font-bold text-emerald-600">₪{deliveryDetail.order.price}</p>
+                        : <p className="text-xs text-gray-400 italic">Pending</p>}
+                    </div>
+                  </div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Products in This Delivery</p>
+                  {deliveryDetail.items?.length > 0 ? (
+                    <div className="space-y-2">
+                      {deliveryDetail.items.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-100">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-800">{item.productname}</p>
+                            <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider mt-0.5">Unit: ₪{item.unitprice}</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="text-sm text-gray-500">Qty: <strong className="text-gray-800">{item.quantity}</strong></span>
+                            <p className="font-bold text-emerald-600">₪{item.subtotal}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : <p className="text-sm text-gray-400 text-center py-6">No product details available.</p>}
+                  <button onClick={() => setDeliveryDetail(null)}
+                    className="w-full mt-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-sm font-semibold transition-all">Close</button>
+                </div>
+              </div>
+            )}
           </div>
         );
+      }
 
       case 'Truck Info':
         return (

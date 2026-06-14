@@ -1,6 +1,7 @@
 import useTab from '../shared/useTab';
 import DataTable from '../shared/DataTable';
 import Drawer from '../shared/Drawer';
+import ConfirmModal from '../shared/ConfirmModal';
 import { Toast, Field, SelectField, AddButton, Badge } from '../shared/ui';
 
 const STATUS_COLORS = {
@@ -9,9 +10,9 @@ const STATUS_COLORS = {
 };
 
 const COLUMNS = [
+    { key: 'driverid',         label: 'ID',    width: '6%',  render: r => <span className="font-bold text-gray-500">#{r.driverid}</span> },
     { key: 'licenseplate',     label: 'License Plate' },
     { key: 'capacity',         label: 'Capacity', render: r => `${r.capacity} T` },
-    { key: 'deliverycieid',    label: 'Delivery Co. ID' },
     { key: 'maintenancestatus', label: 'Maintenance', render: r => (
         <Badge value={r.maintenancestatus} colorMap={STATUS_COLORS} />
     )},
@@ -25,8 +26,28 @@ export default function LogisticsTab() {
     return (
         <>
             {t.toast && <Toast message={t.toast.text} type={t.toast.type} onDone={() => t.setToast(null)} />}
+            {t.confirmRow && (
+                <ConfirmModal
+                    message={`Delete driver with license plate "${t.confirmRow.row.licenseplate}"? This action cannot be undone.`}
+                    onConfirm={t.confirmDelete}
+                    onCancel={t.cancelDelete}
+                />
+            )}
             <AddButton label="Driver" onClick={t.openAdd} />
-            <DataTable columns={COLUMNS} rows={t.rows} onEdit={t.openEdit} onDelete={t.handleDelete} emptyLabel="No drivers." />
+            <DataTable
+                columns={COLUMNS}
+                rows={t.rows}
+                onEdit={t.openEdit}
+                onDelete={t.handleDelete}
+                emptyLabel="No drivers."
+                loading={t.loading}
+                search={t.search}
+                onSearchChange={t.setSearch}
+                page={t.page}
+                totalPages={t.totalPages}
+                onPageChange={t.setPage}
+                totalCount={t.filteredRows.length}
+            />
             {t.drawer && (
                 <Drawer title={t.form.driverid ? 'Edit Driver' : 'Add Driver'} onClose={t.close} onSubmit={t.handleSubmit}>
                     <Field label="License Plate"       name="licenseplate"     value={t.form.licenseplate}     onChange={t.handleChange} placeholder="e.g. 12-345-67" />

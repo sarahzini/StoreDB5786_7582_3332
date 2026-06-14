@@ -22,6 +22,11 @@ const StoreDashboard = () => {
     const [orderDetails, setOrderDetails] = useState(null);
     const [loadingDetails, setLoadingDetails] = useState(false);
 
+    // Search & filter states
+    const [inventorySearch, setInventorySearch] = useState('');
+    const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+    const [catalogSearch, setCatalogSearch] = useState('');
+
     const [formData, setFormData] = useState({ storename: '', phone: '', rating: '', websiteurl: '', email: '', password: '' });
 
     useEffect(() => {
@@ -125,96 +130,160 @@ const StoreDashboard = () => {
         );
 
         // ── INVENTORY ─────────────────────────────────────────────────
-        if (activeTab === 'Inventory') return (
-            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
-                <table className="w-full" style={{ borderCollapse: 'collapse' }}>
-                    <thead>
-                        <tr className="border-b border-gray-100 bg-gray-50">
-                            {['Product Name', 'Price', 'Exp. Date', 'Stock', 'Threshold', 'Status', ''].map(h => (
-                                <th key={h} className="text-left px-5 py-3 text-[10px] font-semibold text-gray-400 tracking-widest uppercase whitespace-nowrap">
-                                    {h}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {realInventory.map((item, i) => {
-                            const low = item.quantity <= item.minimumstock;
-                            return (
-                                <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
-                                    <td className="px-5 py-3.5 text-sm font-medium text-gray-800">{item.productname}</td>
-                                    <td className="px-5 py-3.5 text-sm font-semibold text-gray-700">₪{item.price}</td>
-                                    <td className="px-5 py-3.5 text-sm text-gray-500">{new Date(item.expirationdate).toLocaleDateString()}</td>
-                                    <td className="px-5 py-3.5 text-sm font-bold text-gray-800">{item.quantity}</td>
-                                    <td className="px-5 py-3.5 text-sm text-gray-400">{item.minimumstock}</td>
-                                    <td className="px-5 py-3.5">
-                                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold tracking-wide ${low ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
-                                            {low ? '⚠ LOW STOCK' : '✓ OK'}
-                                        </span>
-                                    </td>
-                                    <td className="px-5 py-3.5">
-                                        <div className="flex gap-2 justify-end">
-                                            <button
-                                                onClick={() => sendRestock(item.productid, item.productname, item.minimumstock * 2)}
-                                                disabled={!low}
-                                                className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap
-                                                    ${low ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:border-red-300' : 'bg-gray-50 text-gray-300 border-gray-100 cursor-default'}`}
-                                            >
-                                                ↺ Restock
-                                            </button>
-                                            <button
-                                                onClick={() => { setOrderModal(item); setOrderQty(item.minimumstock * 2); }}
-                                                className="text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-all whitespace-nowrap"
-                                            >
-                                                + Order
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
+        if (activeTab === 'Inventory') {
+            const filtered = realInventory.filter(item => {
+                const matchesSearch = !inventorySearch || item.productname.toLowerCase().includes(inventorySearch.toLowerCase());
+                const matchesLowStock = !showLowStockOnly || item.quantity <= item.minimumstock;
+                return matchesSearch && matchesLowStock;
+            });
+            return (
+            <div>
+                {/* Search & Filter Bar */}
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="relative flex-1 max-w-xs">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search products..."
+                            value={inventorySearch}
+                            onChange={e => setInventorySearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:border-red-400 focus:ring-2 focus:ring-red-50 transition-all"
+                        />
+                    </div>
+                    <button
+                        onClick={() => setShowLowStockOnly(v => !v)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${
+                            showLowStockOnly
+                                ? 'bg-red-600 text-white border-red-600'
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600'
+                        }`}
+                    >
+                        ⚠ Low Stock Only
+                    </button>
+                    <span className="text-xs text-gray-400 ml-auto">{filtered.length} item{filtered.length !== 1 ? 's' : ''}</span>
+                </div>
+
+                <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                    <table className="w-full" style={{ borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr className="border-b border-gray-100 bg-gray-50">
+                                {['Product Name', 'Price', 'Exp. Date', 'Stock', 'Threshold', 'Status', ''].map(h => (
+                                    <th key={h} className="text-left px-5 py-3 text-[10px] font-semibold text-gray-400 tracking-widest uppercase whitespace-nowrap">
+                                        {h}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filtered.length === 0 ? (
+                                <tr><td colSpan={7} className="text-center py-12 text-sm text-gray-400">
+                                    {showLowStockOnly ? 'No low stock alerts! Everything looks good.' : 'No products found.'}
+                                </td></tr>
+                            ) : filtered.map((item, i) => {
+                                const low = item.quantity <= item.minimumstock;
+                                return (
+                                    <tr key={i} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/60 transition-colors">
+                                        <td className="px-5 py-3.5 text-sm font-medium text-gray-800">{item.productname}</td>
+                                        <td className="px-5 py-3.5 text-sm font-semibold text-gray-700">₪{item.price}</td>
+                                        <td className="px-5 py-3.5 text-sm text-gray-500">{new Date(item.expirationdate).toLocaleDateString()}</td>
+                                        <td className="px-5 py-3.5 text-sm font-bold text-gray-800">{item.quantity}</td>
+                                        <td className="px-5 py-3.5 text-sm text-gray-400">{item.minimumstock}</td>
+                                        <td className="px-5 py-3.5">
+                                            <span className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold tracking-wide ${
+                                                low ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                                            }`}>
+                                                {low ? '⚠ LOW STOCK' : '✓ OK'}
+                                            </span>
+                                        </td>
+                                        <td className="px-5 py-3.5">
+                                            <div className="flex gap-2 justify-end">
+                                                <button
+                                                    onClick={() => sendRestock(item.productid, item.productname, item.minimumstock * 2)}
+                                                    disabled={!low}
+                                                    className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap
+                                                        ${low ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 hover:border-red-300' : 'bg-gray-50 text-gray-300 border-gray-100 cursor-default'}`}
+                                                >
+                                                    ↺ Restock
+                                                </button>
+                                                <button
+                                                    onClick={() => { setOrderModal(item); setOrderQty(item.minimumstock * 2); }}
+                                                    className="text-[11px] font-semibold px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300 transition-all whitespace-nowrap"
+                                                >
+                                                    + Order
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
+        }
 
         // ── CATALOG ───────────────────────────────────────────────────
-        if (activeTab === 'Catalog') return (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6">
-                {allProducts.map((p, i) => {
-                    const IconComponent = getProductIcon(p.productname);
-                    return (
-                        <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 flex flex-col group">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center group-hover:bg-red-100 transition-colors">
-                                    <IconComponent size={20} />
+        if (activeTab === 'Catalog') {
+            const filteredProducts = allProducts.filter(p =>
+                !catalogSearch || p.productname.toLowerCase().includes(catalogSearch.toLowerCase())
+            );
+            return (
+            <div>
+                {/* Catalog Search */}
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="relative flex-1 max-w-xs">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Search catalog..."
+                            value={catalogSearch}
+                            onChange={e => setCatalogSearch(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 text-sm bg-white border border-gray-200 rounded-xl outline-none focus:border-red-400 focus:ring-2 focus:ring-red-50 transition-all"
+                        />
+                    </div>
+                    <span className="text-xs text-gray-400 ml-auto">{filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-6">
+                    {filteredProducts.length === 0 ? (
+                        <div className="col-span-4 text-center py-12 text-sm text-gray-400">No products found for "{catalogSearch}".</div>
+                    ) : filteredProducts.map((p, i) => {
+                        const IconComponent = getProductIcon(p.productname);
+                        return (
+                            <div key={i} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-gray-200 transition-all duration-200 flex flex-col group">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center group-hover:bg-red-100 transition-colors">
+                                        <IconComponent size={20} />
+                                    </div>
+                                    <span className="text-sm font-bold text-gray-900">₪{p.price}</span>
                                 </div>
-                                <span className="text-sm font-bold text-gray-900">₪{p.price}</span>
+                                <h3 className="text-sm font-semibold text-gray-800 mb-3 line-clamp-2 leading-snug">
+                                    {p.productname}
+                                </h3>
+                                <div className="flex flex-wrap gap-1 mb-4 mt-auto">
+                                    {p.kashrut_list
+                                        ? p.kashrut_list.split(',').map((k, idx) => (
+                                            <span key={idx} className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-semibold uppercase rounded-md whitespace-nowrap">
+                                                {k.trim()}
+                                            </span>
+                                        ))
+                                        : <span className="text-[10px] text-gray-300 italic">No kashrut</span>
+                                    }
+                                </div>
+                                <button
+                                    onClick={() => { setOrderModal({ productid: p.productid, productname: p.productname }); setOrderQty(50); }}
+                                    className="w-full py-2 bg-gray-900 text-white text-[11px] font-semibold uppercase rounded-xl hover:bg-red-600 transition-all tracking-wider"
+                                >
+                                    Add to Store
+                                </button>
                             </div>
-                            <h3 className="text-sm font-semibold text-gray-800 mb-3 line-clamp-2 leading-snug">
-                                {p.productname}
-                            </h3>
-                            <div className="flex flex-wrap gap-1 mb-4 mt-auto">
-                                {p.kashrut_list
-                                    ? p.kashrut_list.split(',').map((k, idx) => (
-                                        <span key={idx} className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 text-[9px] font-semibold uppercase rounded-md whitespace-nowrap">
-                                            {k.trim()}
-                                        </span>
-                                    ))
-                                    : <span className="text-[10px] text-gray-300 italic">No kashrut</span>
-                                }
-                            </div>
-                            <button
-                                onClick={() => { setOrderModal({ productid: p.productid, productname: p.productname }); setOrderQty(50); }}
-                                className="w-full py-2 bg-gray-900 text-white text-[11px] font-semibold uppercase rounded-xl hover:bg-red-600 transition-all tracking-wider"
-                            >
-                                Add to Store
-                            </button>
-                        </div>
-                    );
-                })}
+                        );
+                    })}
+                </div>
             </div>
         );
+        }
 
         // ── ORDERS ────────────────────────────────────────────────────
         if (activeTab === 'Orders') return (

@@ -103,5 +103,13 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
+router.put('/order/:id/cancel', async (req, res) => {
+    try {
+        await pool.query("UPDATE \"ORDER\" SET status = 'CANCELLED' WHERE orderid = $1", [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
 
 module.exports = router;
