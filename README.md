@@ -37,6 +37,18 @@ Project by **Sara Heymann 2254681 and Sarah Sebaoun 345887582**
   - [3. Triggers](#3-triggers)
   - [4. Main Programs](#4-main-programs)
   - [5. Backup](#5-backup)
+- [Phase 5: Full-Stack Web Application](#phase-5-full-stack-web-application)
+  - [Overview](#phase-5-overview)
+  - [Architecture](#architecture)
+  - [Prerequisites](#prerequisites)
+  - [Project Structure](#project-structure)
+  - [Installation & Setup](#installation--setup)
+  - [Environment Variables](#environment-variables)
+  - [Running the Application](#running-the-application)
+  - [API Reference](#api-reference)
+  - [Frontend Pages & Features](#frontend-pages--features)
+  - [Database Schema](#database-schema-key-tables)
+  - [Key Design Decisions](#key-design-decisions)
 
 
 ---
@@ -1543,3 +1555,331 @@ $$;
 A final, comprehensive SQL dump has been generated, capturing all tables, data, views, and PL/pgSQL programs (functions, procedures, and triggers) developed across all phases.
 
 - 💾 **Final Database Backup:** [backup4.sql](Stage%204/backup4.sql)
+
+---
+
+## Phase 5: Full-Stack Web Application
+
+### Phase 5 Overview
+
+Stage 5 is the final phase of the project. It builds a complete, production-style full-stack web application on top of the PostgreSQL database designed in previous stages.
+
+The application provides **four distinct role-based dashboards**, each tailored to a specific type of user:
+
+| Role | Description |
+|------|-------------|
+| **Customer** | Browse the product catalog, place orders, view order history, manage profile |
+| **Store Manager** | Monitor inventory, send restock requests, browse catalog, track supply orders |
+| **Driver** | View assigned deliveries, update order status, track monthly activity |
+| **Admin** | Full CRUD access to all entities: drivers, customers, products, stores, warehouses, orders |
+
+---
+
+### Architecture
+
+```
+┌──────────────────────────────────────────────────┐
+│                   FRONTEND                        │
+│         React + Vite + TailwindCSS               │
+│  (LoginPage, CustomerDashboard, StoreDashboard,  │
+│   DriverDashboard, AdminDashboard, SalesChart)   │
+│                   PORT 5173                       │
+└───────────────────┬──────────────────────────────┘
+                    │  HTTP REST API (fetch)
+                    ▼
+┌──────────────────────────────────────────────────┐
+│                   BACKEND                         │
+│            Node.js + Express.js                   │
+│  routes/auth.js   routes/customer.js             │
+│  routes/store.js  routes/driver.js               │
+│  routes/admin.js  server.js (entry point)        │
+│                   PORT 5000                       │
+└───────────────────┬──────────────────────────────┘
+                    │  pg (node-postgres)
+                    ▼
+┌──────────────────────────────────────────────────┐
+│               PostgreSQL Database                 │
+│           Database: new4   PORT 5432             │
+└──────────────────────────────────────────────────┘
+```
+
+---
+
+### Prerequisites
+
+- **Node.js** v18+
+- **npm** v9+
+- **PostgreSQL** v14+ (with the `new4` database from previous stages)
+
+---
+
+### Project Structure
+
+```
+Stage 5/
+├── backend/
+│   ├── .env                  # Environment variables (DB credentials)
+│   ├── db.js                 # PostgreSQL connection pool
+│   ├── server.js             # Express entry point, mounts all routes
+│   ├── package.json
+│   └── routes/
+│       ├── auth.js           # POST /api/login, POST /api/forgot-password
+│       ├── customer.js       # Customer CRUD + stats + orders
+│       ├── store.js          # Store inventory, restock, stats, catalog
+│       ├── driver.js         # Driver orders, stats, chart, profile
+│       └── admin.js          # Full CRUD for all entities + chart
+│
+└── frontend/
+    ├── index.html
+    ├── vite.config.js
+    ├── tailwind.config.js
+    └── src/
+        ├── App.jsx                    # BrowserRouter + route definitions
+        ├── LoginPage.jsx              # Login + role selector + forgot password
+        ├── CustomerDashboard.jsx      # Customer portal
+        ├── StoreDashboard.jsx         # Store portal
+        ├── DriverDashboard.jsx        # Driver portal
+        ├── SalesChart.jsx             # Reusable AreaChart (recharts)
+        └── admin/
+            ├── AdminDashboard.jsx
+            ├── shared/
+            │   ├── DataTable.jsx      # Generic reusable table
+            │   ├── Drawer.jsx         # Slide-in form panel
+            │   └── ui.jsx             # Shared UI primitives
+            └── tabs/
+                ├── OverviewTab.jsx
+                ├── ProductsTab.jsx
+                ├── CustomersTab.jsx
+                ├── LogisticsTab.jsx
+                ├── StoresTab.jsx
+                ├── WarehousesTab.jsx
+                ├── OrdersTab.jsx
+                ├── InventoryTab.jsx
+                ├── DeliveryTab.jsx
+                ├── CategoriesTab.jsx
+                └── SuppliersTab.jsx
+```
+
+---
+
+### Installation & Setup
+
+**Backend:**
+```bash
+cd "Stage 5/backend"
+npm install
+```
+
+**Frontend:**
+```bash
+cd "Stage 5/frontend"
+npm install
+```
+
+---
+
+### Environment Variables
+
+Create a `.env` file inside `Stage 5/backend/`:
+
+```env
+DB_USER_SECRET=sara
+DB_HOST=localhost
+DB_NAME_SECRET=new4
+DB_PASSWORD_SECRET=sara
+DB_PORT=5432
+PORT=5000
+```
+
+---
+
+### Running the Application
+
+Open **two terminals**:
+
+**Terminal 1 — Backend:**
+```bash
+cd "Stage 5/backend"
+node server.js
+# ✅ Server running on port 5000
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd "Stage 5/frontend"
+npm run dev
+# Local: http://localhost:5173/
+```
+
+Open your browser at: **http://localhost:5173**
+
+---
+
+### API Reference
+
+All endpoints are prefixed with `/api`. The backend runs on **port 5000**.
+
+#### Authentication
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/login` | Authenticate a user. Body: `{ email, password, role }`. Role: `Customer`, `Store`, `Driver`, or `Admin`. |
+| `POST` | `/api/forgot-password` | Reset password to the temporary value `reset123`. Body: `{ email, role }`. |
+
+#### Customer Routes — `/api/customer`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/customer/:id` | Fetch fresh customer data by ID |
+| `PUT` | `/api/customer/update` | Update profile (password only updated if non-empty) |
+| `GET` | `/api/customer/stats/:customerid` | Returns `{ totalOrders, totalSpent, loyaltyTier }` |
+| `GET` | `/api/customer/orders/:customerid` | Last 5 orders for the customer |
+
+#### Store Routes — `/api/store`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/store/:storeid` | Fetch fresh store data by ID |
+| `GET` | `/api/store/inventory/:storeid` | Full inventory list (joined with product info) |
+| `GET` | `/api/store/orders/:storeid` | Last 10 supply/restock orders |
+| `GET` | `/api/store/stats/:storeid` | `{ dailySales, stockAlerts, pendingRequests, chartData }` |
+| `GET` | `/api/store/products` | All products (for Browse Catalog tab) |
+| `GET` | `/api/store/order-details/:orderid` | Full order info + product breakdown |
+| `PUT` | `/api/store/update` | Update store profile (password optional) |
+| `POST` | `/api/store/restock` | Create a supply restock order |
+
+#### Driver Routes — `/api/driver`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/driver/orders/:driverid` | All orders assigned to the driver |
+| `GET` | `/api/driver/stats/:driverid` | `{ totalRevenue }` |
+| `GET` | `/api/driver/chart/:driverid` | Daily delivery count for current month |
+| `PUT` | `/api/driver/update` | Update email and/or password |
+
+#### Admin Routes — `/api/admin`
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/drivers` | All drivers |
+| `GET` | `/api/admin/customers` | All customers |
+| `GET` | `/api/admin/products` | All products (with kashrut & category) |
+| `GET` | `/api/admin/warehouses` | All warehouses |
+| `GET` | `/api/admin/stores` | All stores |
+| `GET` | `/api/admin/orders` | All orders |
+| `GET` | `/api/admin/chart` | Daily global revenue for current month |
+| `POST` | `/api/admin/drivers` | Add a driver |
+| `POST` | `/api/admin/customers` | Add a customer |
+| `POST` | `/api/admin/stores` | Add a store |
+| `POST` | `/api/admin/products` | Add a product (+ kashrut) |
+| `POST` | `/api/admin/warehouses` | Add a warehouse |
+| `PUT` | `/api/admin/drivers/:id` | Update driver |
+| `PUT` | `/api/admin/customers/:id` | Update customer |
+| `PUT` | `/api/admin/stores/:id` | Update store |
+| `PUT` | `/api/admin/products/:id` | Update product (kashrut: delete + re-insert) |
+| `PUT` | `/api/admin/warehouses/:id` | Update warehouse |
+| `DELETE` | `/api/admin/drivers/:id` | Nullifies orders, then deletes driver |
+| `DELETE` | `/api/admin/customers/:id` | Nullifies orders, then deletes customer |
+| `DELETE` | `/api/admin/products/:id` | Deletes kashrut + inventory rows first |
+| `DELETE` | `/api/admin/warehouses/:id` | Deletes inventory rows first |
+| `DELETE` | `/api/admin/stores/:id` | Deletes inventory, nullifies orders, then deletes store |
+
+#### Shared Routes
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `PUT` | `/api/orders/update-status` | Update any order's status. When set to `DELIVERED`, automatically adjusts inventory (decrease for customer orders, increase for restock orders). |
+
+---
+
+### Frontend Pages & Features
+
+#### Login Page (`/`)
+- Role selector: Customer / Store / Driver / Admin
+- Email + password fields with inline error display
+- **Forgot Password modal**: enter email → password reset to `reset123` → temporary password shown on screen
+- Redirects to the correct dashboard after login, passing the `user` object via React Router `location.state`
+
+#### Customer Dashboard (`/customer`)
+
+| Tab | Features |
+|-----|----------|
+| **Overview** | Welcome message, Loyalty Badge (Standard / Premium / VIP Gold), total orders, total spent, last 3 orders |
+| **Shop** | Product catalog grid. Each card shows name, price, kashrut badges, and a **Buy Now** button |
+| **My Orders** | Full order history with status badges. **View →** opens a detail modal with product breakdown |
+| **Profile** | Edit name, email, phone, city, street, password. Data always re-fetched from DB on mount |
+
+#### Store Dashboard (`/store`)
+
+| Tab | Features |
+|-----|----------|
+| **Overview** | Monthly revenue chart, supply expenses, stock alert count, pending requests |
+| **Inventory** | Table with LOW STOCK / OK badges. **↺ Restock** (auto-fills 2× minimum) and **+ Order** (custom qty modal) |
+| **Browse Catalog** | Product grid with **Add to Store** button triggering a restock order |
+| **Order Requests** | Supply order table. **View →** opens order detail modal with product breakdown |
+| **Account Info** | Edit name, email, phone, website. Rating is read-only. Password only updated if typed |
+
+#### Driver Dashboard (`/driver`)
+
+| Tab | Features |
+|-----|----------|
+| **Overview** | Total revenue stat, monthly deliveries chart |
+| **Deliveries** | Table of assigned orders with status update controls |
+| **Profile** | Edit email and password |
+
+#### Admin Dashboard (`/admin`)
+
+Full back-office built with reusable `DataTable`, `Drawer`, and `Field` components.
+
+| Section | Features |
+|---------|----------|
+| **Overview** | Global stats + monthly revenue chart |
+| **Products** | CRUD with kashrut tags |
+| **Warehouses** | CRUD with region + address |
+| **Trucks & Drivers** | CRUD with license plate, capacity, status badge |
+| **Stores (RL)** | CRUD with name, email, phone, rating |
+| **Orders** | Full order table — edit status or delete |
+| **Customers** | CRUD with name, email, city, loyalty tier |
+
+---
+
+### Database Schema (Key Tables)
+
+| Table | Description |
+|-------|-------------|
+| `customer` | Customer accounts (customerid, customername, email, password, phone, city, street, loyaltytier) |
+| `store` | Store accounts (storeid, storename, email, password, phone, rating, websiteurl) |
+| `truck` | Driver accounts (driverid, email, password, licenseplate, capacity, maintenancestatus, active) |
+| `admin` | Admin accounts (email, password) |
+| `product` | Products (productid, productname, price, dateofmanufacture, expirationdate, categoryid, supplierid) |
+| `product_kashrut` | Many-to-many: product ↔ kashrut label |
+| `category` | Product categories |
+| `supplier` | Product suppliers |
+| `warehouse` | Warehouses (warehouseid, region, address) |
+| `inventory` | Stock per product per store (productid, storeid, quantity, minimumstock) |
+| `ORDER` | All orders (orderid, customerid, storeid, driverid, orderdate, status, paymentmethod, price) |
+| `contains` | Order line items (orderid, productid, quantity, subtotal, inonsale) |
+
+---
+
+### Key Design Decisions
+
+**1. Safe Password Updates**
+All `UPDATE` routes only include `password` in the SQL query when a non-empty value is provided, preventing accidental overwrites with `null`.
+
+**2. Fresh Data on Mount**
+Customer and Store dashboards re-fetch their profile data from the DB every time the component mounts (`GET /api/customer/:id`, `GET /api/store/:storeid`), so navigation never shows stale login-session data.
+
+**3. Inventory Auto-Update on Delivery**
+When `PUT /api/orders/update-status` sets a status to `DELIVERED`:
+- **Customer order** → inventory **decreased** at the store
+- **Restock order** (no customer) → inventory **increased** at the store
+
+**4. Cascading Deletes**
+Admin delete routes manually nullify foreign keys in related tables before deleting the parent record, preventing constraint violations.
+
+**5. Reusable SalesChart**
+`SalesChart.jsx` wraps recharts `AreaChart` and accepts `data`, `label`, and `prefix` props, making it reusable across Store, Driver, and Admin dashboards.
+
+**6. Modular Backend**
+The backend is split into 5 route files mounted in `server.js`. DB credentials are stored in `.env` and accessed through a shared `db.js` connection pool.
