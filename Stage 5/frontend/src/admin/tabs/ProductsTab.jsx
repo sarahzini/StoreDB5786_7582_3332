@@ -3,25 +3,53 @@ import DataTable from '../shared/DataTable';
 import Drawer from '../shared/Drawer';
 import { Toast, Field, AddButton } from '../shared/ui';
 
+const KashrutBadge = ({ label }) => (
+    <span style={{
+        display: 'inline-block', padding: '2px 8px', marginRight: '4px', marginBottom: '4px',
+        fontSize: '10px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase',
+        borderRadius: 'var(--border-radius-md)',
+        background: 'var(--color-background-info)',
+        color: 'var(--color-text-info)',
+        border: '0.5px solid var(--color-border-info)',
+        whiteSpace: 'nowrap',
+    }}>
+        {label}
+    </span>
+);
+
 const COLUMNS = [
-    { key: 'productname', label: 'Name', width: '22%' },
-    { key: 'price', label: 'Price', width: '9%', render: r => `₪ ${parseFloat(r.price).toFixed(2)}` },
-    { key: 'categoryname', label: 'Category', width: '12%', render: r => r.categoryname || <span className="text-gray-300 italic text-[11px]">—</span> },
-    { key: 'suppliername', label: 'Supplier', width: '12%', render: r => r.suppliername || <span className="text-gray-300 italic text-[11px]">—</span> },
-    { key: 'dateofmanufacture', label: 'Manufacture', width: '11%', render: r => r.dateofmanufacture ? new Date(r.dateofmanufacture).toLocaleDateString() : '—' },
-    { key: 'expirationdate', label: 'Expiry', width: '11%', render: r => r.expirationdate ? new Date(r.expirationdate).toLocaleDateString() : '—' },
+    { key: 'productname', label: 'Name', width: '20%' },
     {
-        key: 'kashrut_list', label: 'Kashrut', width: '23%', render: r => r.kashrut_list
-            ? (
-                <div className="flex flex-wrap gap-1">
-                    {r.kashrut_list.split(',').map((k, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded text-[9px] font-bold uppercase whitespace-nowrap">
-                            {k.trim()}
-                        </span>
-                    ))}
-                </div>
-            )
-            : <span className="text-gray-300 italic text-[11px]">None</span>
+        key: 'price', label: 'Price', width: '8%',
+        render: r => <span style={{ fontWeight: 500 }}>₪{parseFloat(r.price).toFixed(2)}</span>
+    },
+    {
+        key: 'categoryname', label: 'Category', width: '11%',
+        render: r => r.categoryname
+            ? <span style={{ color: 'var(--color-text-primary)' }}>{r.categoryname}</span>
+            : <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontSize: '12px' }}>—</span>
+    },
+    {
+        key: 'suppliername', label: 'Supplier', width: '12%',
+        render: r => r.suppliername
+            ? <span>{r.suppliername}</span>
+            : <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontSize: '12px' }}>—</span>
+    },
+    {
+        key: 'dateofmanufacture', label: 'Manufacture', width: '10%',
+        render: r => r.dateofmanufacture ? new Date(r.dateofmanufacture).toLocaleDateString() : '—'
+    },
+    {
+        key: 'expirationdate', label: 'Expiry', width: '10%',
+        render: r => r.expirationdate ? new Date(r.expirationdate).toLocaleDateString() : '—'
+    },
+    {
+        key: 'kashrut_list', label: 'Kashrut', width: '20%',
+        render: r => r.kashrut_list
+            ? <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                {r.kashrut_list.split(',').map((k, i) => <KashrutBadge key={i} label={k.trim()} />)}
+            </div>
+            : <span style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic', fontSize: '12px' }}>None</span>
     },
 ];
 

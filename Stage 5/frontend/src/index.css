@@ -1,21 +1,23 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* FORCER LA DISPARITION DE TOUTES LES SCROLLBARS GLOABLEMENT */
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
+* {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;     /* Firefox */
+}
+
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
-  /* Cache la scrollbar sur les navigateurs Webkit */
-.overflow-y-auto::-webkit-scrollbar {
-  display: none;
-}
-
-/* Cache la scrollbar pour Firefox */
-.overflow-y-auto {
-  scrollbar-width: none;
-}
 }
