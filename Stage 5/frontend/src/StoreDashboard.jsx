@@ -50,7 +50,7 @@ const StoreDashboard = () => {
             if (!storeData.storeid) return;
             try {
                 // Fetch current inventory for this specific store
-                const invRes = await fetch(`http://localhost:5000/api/inventory/${storeData.storeid}`);
+                const invRes = await fetch(`http://localhost:5000/api/store/inventory/${storeData.storeid}`);
                 setRealInventory(await invRes.json());
 
                 // NEW: Fetch products available to the store without admin-only category data
@@ -124,8 +124,7 @@ const StoreDashboard = () => {
             <div className="space-y-6">
                 <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
                     <p className="text-[11px] font-medium text-gray-400 tracking-[0.12em] uppercase mb-4">Monthly Supply Activity</p>
-                    <div className="w-full"><SalesChart data={stats.chartData} label="Supply Expenses" prefix="₪" /></div>
-                </div>
+                    <div className="w-full" style={{ height: '300px' }}><SalesChart data={stats.chartData} label="Supply Expenses" prefix="₪" /></div>              </div>
                 <div className="grid grid-cols-3 gap-6">
                     {[{ label: 'Supply Expenses', value: stats.dailySales }, { label: 'Stock Alerts', value: stats.stockAlerts }, { label: 'Pending Requests', value: stats.pendingRequests }].map((stat) => (
                         <div key={stat.label} className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">

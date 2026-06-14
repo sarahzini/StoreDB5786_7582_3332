@@ -3,18 +3,7 @@ const router = express.Router();
 const pool = require('../db');
 
 // GET /api/store/:storeid — fetch a store by ID
-router.get('/:storeid', async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM store WHERE storeid = $1', [req.params.storeid]);
-        if (result.rows.length > 0) {
-            res.json({ success: true, user: result.rows[0] });
-        } else {
-            res.json({ success: false });
-        }
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
+
 
 // GET /api/store/inventory/:storeid — get inventory for a store
 router.get('/inventory/:storeid', async (req, res) => {
@@ -188,8 +177,20 @@ router.post('/restock', async (req, res) => {
 
         res.json({ success: true, orderid: nextId });
     } catch (err) {
-        await pool.query(`SET session_replication_role = DEFAULT`).catch(() => {});
+        await pool.query(`SET session_replication_role = DEFAULT`).catch(() => { });
         res.json({ success: false, message: err.message });
+    }
+});
+router.get('/:storeid', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM store WHERE storeid = $1', [req.params.storeid]);
+        if (result.rows.length > 0) {
+            res.json({ success: true, user: result.rows[0] });
+        } else {
+            res.json({ success: false });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
