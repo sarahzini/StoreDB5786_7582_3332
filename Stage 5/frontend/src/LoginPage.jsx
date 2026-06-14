@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Truck, Store, User, ShieldCheck, AlertCircle } from 'lucide-react'; // Ajout de AlertCircle
+import { Truck, Store, User, ShieldCheck, AlertCircle, X, CheckCircle } from 'lucide-react';
 
 const LoginPage = () => {
     const [selectedRole, setSelectedRole] = useState('Customer');
@@ -10,6 +10,10 @@ const LoginPage = () => {
 
     // Nouvel état pour gérer le message d'erreur
     const [errorMessage, setErrorMessage] = useState('');
+    const [showForgotModal, setShowForgotModal] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotMessage, setForgotMessage] = useState(null);
+    const [forgotLoading, setForgotLoading] = useState(false);
 
     const roles = [
         { id: 'Customer', icon: User, label: 'CUSTOMER' },
@@ -49,6 +53,31 @@ const LoginPage = () => {
             // Erreur de serveur en Anglais
             setErrorMessage("Connection error. Please try again later.");
         }
+    };
+
+    const handleForgotPassword = async () => {
+        if (!forgotEmail.trim()) {
+            setForgotMessage({ type: 'error', text: 'Please enter your email address.' });
+            return;
+        }
+        setForgotLoading(true);
+        setForgotMessage(null);
+        try {
+            const response = await fetch('http://localhost:5000/api/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: forgotEmail, role: selectedRole })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setForgotMessage({ type: 'success', text: data.message });
+            } else {
+                setForgotMessage({ type: 'error', text: data.message });
+            }
+        } catch (err) {
+            setForgotMessage({ type: 'error', text: 'Connection error. Please try again.' });
+        }
+        setForgotLoading(false);
     };
 
     return (
@@ -164,12 +193,81 @@ const LoginPage = () => {
                             Sign In →
                         </button>
 
-                        <p className="text-center text-[10.5px] text-gray-400 hover:text-red-500 cursor-pointer transition-colors pt-0.5">
+                        <p
+                            onClick={() => { setShowForgotModal(true); setForgotEmail(email); setForgotMessage(null); }}
+                            className="text-center text-[10.5px] text-gray-400 hover:text-red-500 cursor-pointer transition-colors pt-0.5"
+                        >
                             Forgot password?
                         </p>
                     </div>
                 </div>
             </div>
+
+            {/* FORGOT PASSWORD MODAL */}
+            {showForgotModal && (
+                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 w-[380px] relative">
+                        <button
+                            onClick={() => setShowForgotModal(false)}
+                            className="absolute top-4 right-4 text-gray-300 hover:text-gray-500 transition-colors"
+                        >
+                            <X size={18} />
+                        </button>
+
+                        <div className="flex items-center gap-2 mb-1">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                            <span className="text-[9px] font-medium tracking-[0.2em] text-red-600/60 uppercase">Password Recovery</span>
+                        </div>
+                        <h2 className="text-lg font-bold text-gray-900 mb-1">Reset your password</h2>
+                        <p className="text-[11px] text-gray-400 mb-6">Enter your email and we'll reset your password for the selected role (<span className="font-semibold text-gray-600">{selectedRole}</span>).</p>
+
+                        {forgotMessage && (
+                            <div className={`w-full p-3 rounded-lg flex items-start gap-2.5 mb-4 ${
+                                forgotMessage.type === 'success'
+                                    ? 'bg-emerald-50 border border-emerald-100'
+                                    : 'bg-red-50 border border-red-100'
+                            }`}>
+                                {forgotMessage.type === 'success'
+                                    ? <CheckCircle size={15} className="text-emerald-500 shrink-0 mt-0.5" />
+                                    : <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+                                }
+                                <span className={`text-[11px] font-medium leading-tight ${
+                                    forgotMessage.type === 'success' ? 'text-emerald-700' : 'text-red-600'
+                                }`}>
+                                    {forgotMessage.text}
+                                </span>
+                            </div>
+                        )}
+
+                        <div className="mb-4">
+                            <label className="block text-[8.5px] font-medium text-gray-400 tracking-[0.16em] mb-1.5 uppercase">Account Email</label>
+                            <input
+                                type="email"
+                                placeholder="name@ramilevy.co.il"
+                                value={forgotEmail}
+                                onChange={(e) => setForgotEmail(e.target.value)}
+                                className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 outline-none transition-all placeholder:text-gray-300 focus:border-red-400 focus:ring-2 focus:ring-red-50"
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowForgotModal(false)}
+                                className="flex-1 py-2.5 rounded-lg border border-gray-200 text-sm text-gray-500 hover:bg-gray-50 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleForgotPassword}
+                                disabled={forgotLoading}
+                                className="flex-1 py-2.5 rounded-lg bg-[#0B1120] text-white text-sm font-medium hover:bg-red-600 transition-all disabled:opacity-50"
+                            >
+                                {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

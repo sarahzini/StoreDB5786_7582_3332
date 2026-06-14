@@ -44,12 +44,54 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// --- FORGOT PASSWORD ---
+app.post('/api/forgot-password', async (req, res) => {
+    const { email, role } = req.body;
+    const newPassword = 'reset123';
+    try {
+        const tables = { Customer: 'customer', Store: 'store', Driver: 'truck', Admin: 'admin' };
+        const table = tables[role];
+        if (!table) return res.status(400).json({ success: false, message: 'Invalid role.' });
+
+        const check = await pool.query(`SELECT * FROM ${table} WHERE email = $1`, [email]);
+        if (check.rows.length === 0) {
+            return res.json({ success: false, message: 'No account found with this email for the selected role.' });
+        }
+
+        await pool.query(`UPDATE ${table} SET password = $1 WHERE email = $2`, [newPassword, email]);
+        res.json({ success: true, message: `Password has been reset. Your new temporary password is: ${newPassword}` });
+    } catch (err) {
+        console.error("Forgot password error:", err.message);
+        res.status(500).json({ success: false, message: 'Server error. Please try again.' });
+    }
+});
+
 // --- CUSTOMER ROUTES ---
+app.get('/api/customer/:id', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM customer WHERE customerid = $1', [req.params.id]);
+        if (result.rows.length > 0) {
+            res.json({ success: true, user: result.rows[0] });
+        } else {
+            res.json({ success: false, message: 'Customer not found.' });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 app.put('/api/customer/update', async (req, res) => {
     const { customerid, customername, email, phone, city, street, password } = req.body;
     try {
-        const query = `UPDATE customer SET customername = $1, email = $2, phone = $3, city = $4, street = $5, password = $6 WHERE customerid = $7`;
-        await pool.query(query, [customername, email, phone, city, street, password, customerid]);
+        let query = `UPDATE customer SET customername = $1, email = $2, phone = $3, city = $4, street = $5 WHERE customerid = $6`;
+        let params = [customername, email, phone, city, street, customerid];
+
+        if (password && password.trim() !== '') {
+            query = `UPDATE customer SET customername = $1, email = $2, phone = $3, city = $4, street = $5, password = $6 WHERE customerid = $7`;
+            params = [customername, email, phone, city, street, password, customerid];
+        }
+
+        await pool.query(query, params);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -77,10 +119,40 @@ app.get('/api/customer/stats/:customerid', async (req, res) => {
 
 app.get('/api/customer/orders/:customerid', async (req, res) => {
     try {
-        const result = await pool.query('SELECT orderid, orderdate, status FROM "ORDER" WHERE customerid = $1 ORDER BY orderdate DESC LIMIT 5', [req.params.customerid]);
+        const result = await pool.query('SELECT orderid, orderdate, status FROM "ORDER" WHERE customerid = $1 ORDER BY orderdate DESC', [req.params.customerid]);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: "Erreur serveur" });
+    }
+});
+
+app.post('/api/customer/order', async (req, res) => {
+    const { customerid, productid, quantity, storeid } = req.body;
+    const chosenStoreId = storeid || 1;
+
+    try {
+        const prod = await pool.query('SELECT price FROM product WHERE productid = $1', [productid]);
+        if (prod.rows.length === 0) return res.status(404).json({ success: false, message: "Product not found" });
+
+        const price = prod.rows[0].price * quantity;
+
+        const maxResult = await pool.query('SELECT COALESCE(MAX(orderid), 0) + 1 AS nextid FROM "ORDER"');
+        const nextId = maxResult.rows[0].nextid;
+
+        await pool.query(
+            'INSERT INTO "ORDER" (orderid, customerid, storeid, orderdate, status, price, paymentmethod) VALUES ($1, $2, $3, NOW(), $4, $5, $6)',
+            [nextId, customerid, chosenStoreId, 'PENDING', price, 'Credit Card']
+        );
+
+        await pool.query(
+            'INSERT INTO contains (orderid, productid, quantity, subtotal, inonsale) VALUES ($1, $2, $3, $4, false)',
+            [nextId, productid, quantity, price]
+        );
+
+        res.json({ success: true, orderid: nextId });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: err.message });
     }
 });
 
@@ -99,8 +171,49 @@ app.get('/api/inventory/:storeid', async (req, res) => {
 app.get('/api/store/orders/:storeid', async (req, res) => {
     const { storeid } = req.params;
     try {
-        const query = `SELECT orderid as id, orderdate as date, status FROM "ORDER" WHERE storeid = $1 AND customerid IS NULL ORDER BY orderdate DESC LIMIT 10`;
+        const query = `
+            SELECT orderid as id, orderdate as date, status 
+            FROM "ORDER" 
+            WHERE storeid = $1 AND customerid IS NULL 
+            ORDER BY orderdate DESC
+        `;
         const result = await pool.query(query, [storeid]);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json([]);
+    }
+});
+
+app.get('/api/store/order-details/:orderid', async (req, res) => {
+    const { orderid } = req.params;
+    try {
+        const orderRes = await pool.query(
+            `SELECT orderid, orderdate, status, price FROM "ORDER" WHERE orderid = $1`,
+            [orderid]
+        );
+        const itemsRes = await pool.query(
+            `SELECT p.productname, p.price as unitprice, c.quantity, c.subtotal
+             FROM contains c
+             JOIN product p ON c.productid = p.productid
+             WHERE c.orderid = $1`,
+            [orderid]
+        );
+        res.json({ order: orderRes.rows[0], items: itemsRes.rows });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.get('/api/store/products', async (req, res) => {
+    try {
+        const query = `
+            SELECT p.productid, p.productname, p.price, STRING_AGG(pk.kashrut, ', ') AS kashrut_list
+            FROM product p
+            LEFT JOIN product_kashrut pk ON p.productid = pk.productid
+            GROUP BY p.productid, p.productname, p.price
+            ORDER BY p.productid ASC
+        `;
+        const result = await pool.query(query);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json([]);
@@ -111,7 +224,7 @@ app.get('/api/store/stats/:storeid', async (req, res) => {
     const { storeid } = req.params;
     try {
         const stockAlertsResult = await pool.query("SELECT COUNT(*) as count FROM inventory WHERE storeid = $1 AND quantity <= minimumstock", [storeid]);
-        const pendingOrdersResult = await pool.query('SELECT COUNT(*) as count FROM "ORDER" WHERE storeid = $1 AND customerid IS NULL AND status = \'PENDING\'', [storeid]);
+        const pendingOrdersResult = await pool.query('SELECT COUNT(*) as count FROM "ORDER" WHERE storeid = $1 AND customerid IS NULL AND status ILIKE \'pending\'', [storeid]);
         const costResult = await pool.query(`SELECT SUM(price) as total FROM "ORDER" WHERE storeid = $1 AND EXTRACT(MONTH FROM orderdate) = EXTRACT(MONTH FROM CURRENT_DATE) AND EXTRACT(YEAR FROM orderdate) = EXTRACT(YEAR FROM CURRENT_DATE)`, [storeid]);
 
         const chartQuery = `
@@ -133,8 +246,15 @@ app.get('/api/store/stats/:storeid', async (req, res) => {
 app.put('/api/store/update', async (req, res) => {
     const { storeid, storename, phone, rating, websiteurl, email, password } = req.body;
     try {
-        const query = `UPDATE store SET storename = $1, phone = $2, rating = $3, websiteurl = $4, email = $5, password = $6 WHERE storeid = $7`;
-        await pool.query(query, [storename, phone, rating, websiteurl, email, password, storeid]);
+        let query = `UPDATE store SET storename = $1, phone = $2, rating = $3, websiteurl = $4, email = $5 WHERE storeid = $6`;
+        let params = [storename, phone, rating, websiteurl, email, storeid];
+
+        if (password && password.trim() !== '') {
+            query = `UPDATE store SET storename = $1, phone = $2, rating = $3, websiteurl = $4, email = $5, password = $6 WHERE storeid = $7`;
+            params = [storename, phone, rating, websiteurl, email, password, storeid];
+        }
+
+        await pool.query(query, params);
         res.json({ success: true, message: "Informations mises à jour avec succès !" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
@@ -144,27 +264,36 @@ app.put('/api/store/update', async (req, res) => {
 app.post('/api/store/restock', async (req, res) => {
     const { storeid, productid, quantity } = req.body;
     try {
+        const productRes = await pool.query(`SELECT price FROM product WHERE productid = $1`, [productid]);
+
+        if (productRes.rows.length === 0) {
+            return res.json({ success: false, message: "Produit introuvable." });
+        }
+
+        const unitPrice = parseFloat(productRes.rows[0].price);
+        const totalPrice = unitPrice * quantity;
+
         const maxResult = await pool.query(`SELECT COALESCE(MAX(orderid), 0) + 1 AS nextid FROM public."ORDER"`);
         const nextId = maxResult.rows[0].nextid;
-        await pool.query(`INSERT INTO public."ORDER" (orderid, storeid, orderdate, status, paymentmethod, price, driverid, customerid) VALUES ($1, $2, NOW(), 'Pending', 'Store Request', 0, NULL, NULL)`, [nextId, storeid]);
+
+        await pool.query(
+            `INSERT INTO public."ORDER" (orderid, storeid, orderdate, status, paymentmethod, price, driverid, customerid) 
+             VALUES ($1, $2, NOW(), 'PENDING', 'Store Request', $3, NULL, NULL)`,
+            [nextId, storeid, totalPrice]
+        );
+
         await pool.query(`SET session_replication_role = replica`);
-        await pool.query(`INSERT INTO public.contains (orderid, productid, quantity, subtotal, inonsale) VALUES ($1, $2, $3, 0, false)`, [nextId, productid, quantity]);
+        await pool.query(
+            `INSERT INTO public.contains (orderid, productid, quantity, subtotal, inonsale) 
+             VALUES ($1, $2, $3, $4, false)`,
+            [nextId, productid, quantity, totalPrice]
+        );
         await pool.query(`SET session_replication_role = DEFAULT`);
+
         res.json({ success: true, orderid: nextId });
     } catch (err) {
         await pool.query(`SET session_replication_role = DEFAULT`).catch(() => { });
         res.json({ success: false, message: err.message });
-    }
-});
-
-// --- ORDERS ---
-app.put('/api/orders/update-status', async (req, res) => {
-    const { orderid, status } = req.body;
-    try {
-        await pool.query('UPDATE "ORDER" SET status = $1 WHERE orderid = $2', [status, orderid]);
-        res.json({ success: true, message: `Statut mis à jour en ${status}` });
-    } catch (err) {
-        res.status(500).json({ success: false, message: "Erreur serveur" });
     }
 });
 
@@ -192,8 +321,16 @@ app.get('/api/driver/stats/:driverid', async (req, res) => {
 app.put('/api/driver/update', async (req, res) => {
     const { driverid, email, password } = req.body;
     try {
-        await pool.query(`UPDATE truck SET email = $1, password = $2 WHERE driverid = $3`, [email, password, driverid]);
-        res.json({ success: true });
+        let query = `UPDATE truck SET email = $1 WHERE driverid = $2`;
+        let params = [email, driverid];
+
+        if (password && password.trim() !== '') {
+            query = `UPDATE truck SET email = $1, password = $2 WHERE driverid = $3`;
+            params = [email, password, driverid];
+        }
+
+        await pool.query(query, params);
+        res.json({ success: true, message: "Account updated successfully!" });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -204,8 +341,12 @@ app.get('/api/driver/chart/:driverid', async (req, res) => {
     try {
         const query = `
             SELECT TO_CHAR(day_series, 'DD') as day, COALESCE(COUNT(o.orderid), 0) as deliveries
-            FROM generate_series(DATE_TRUNC('month', CURRENT_DATE), DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' - INTERVAL '1 second', '1 day'::interval) AS day_series
-            LEFT JOIN "ORDER" o ON DATE(o.orderdate) = DATE(day_series) AND o.driverid = $1
+            FROM generate_series(
+                DATE_TRUNC('month', CURRENT_DATE)::date,
+                (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' - INTERVAL '1 day')::date,
+                '1 day'::interval
+            ) AS day_series
+            LEFT JOIN "ORDER" o ON DATE(o.orderdate) = day_series::date AND o.driverid = $1
             GROUP BY day_series ORDER BY day_series ASC
         `;
         const result = await pool.query(query, [driverid]);
@@ -265,6 +406,20 @@ app.get('/api/admin/warehouses', async (req, res) => {
 app.get('/api/admin/stores', async (req, res) => {
     try {
         const result = await pool.query(`SELECT * FROM store ORDER BY storeid ASC`);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json([]);
+    }
+});
+
+// ✅ AJOUTÉ — GET all orders (admin)
+app.get('/api/admin/orders', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT orderid, customerid, storeid, driverid, price, status, paymentmethod, orderdate
+            FROM "ORDER"
+            ORDER BY orderid DESC
+        `);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json([]);
@@ -338,14 +493,10 @@ app.post('/api/admin/products', async (req, res) => {
 app.post('/api/admin/warehouses', async (req, res) => {
     const { region, address } = req.body;
     try {
-        // 1. On va chercher le plus grand ID actuel et on ajoute 1
         const maxResult = await pool.query('SELECT COALESCE(MAX(warehouseid), 0) + 1 AS nextid FROM warehouse');
         const nextId = maxResult.rows[0].nextid;
-
-        // 2. On insère en forçant l'utilisation de cet ID
         const query = `INSERT INTO warehouse (warehouseid, region, address) VALUES ($1, $2, $3) RETURNING *`;
         const result = await pool.query(query, [nextId, region, address]);
-
         res.json({ success: true, data: result.rows[0] });
     } catch (err) {
         console.error("Erreur ajout entrepôt:", err.message);
@@ -353,90 +504,36 @@ app.post('/api/admin/warehouses', async (req, res) => {
     }
 });
 
-
-app.get('/api/admin/chart', async (req, res) => {
+// ✅ AJOUTÉ — POST new order (admin)
+app.post('/api/admin/orders', async (req, res) => {
+    const { customerid, storeid, driverid, price, status, paymentmethod, orderdate } = req.body;
     try {
+        const maxResult = await pool.query('SELECT COALESCE(MAX(orderid), 0) + 1 AS nextid FROM "ORDER"');
+        const nextId = maxResult.rows[0].nextid;
         const query = `
-            SELECT 
-                TO_CHAR(day_series, 'DD') as name,
-                COALESCE(SUM(o.price), 0) as sales
-            FROM generate_series(
-                DATE_TRUNC('month', CURRENT_DATE),
-                DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' - INTERVAL '1 second',
-                '1 day'::interval
-            ) AS day_series
-            LEFT JOIN "ORDER" o ON DATE(o.orderdate) = DATE(day_series)
-                AND o.price IS NOT NULL
-            GROUP BY day_series
-            ORDER BY day_series ASC
+            INSERT INTO "ORDER" (orderid, customerid, storeid, driverid, price, status, paymentmethod, orderdate)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING *
         `;
-        const result = await pool.query(query);
-        res.json(result.rows.map(r => ({ name: r.name.trim(), sales: parseFloat(r.sales) })));
-    } catch (err) {
-        console.error(err);
-        res.status(500).json([]);
-    }
-});
-// --- DANS server.js ---
-
-app.delete('/api/admin/drivers/:id', async (req, res) => {
-    try {
-        // En théorie, un driver a des "ORDERS" rattachés. S'il en a, tu devrais soit le désactiver, soit mettre driverid = NULL dans "ORDER"
-        await pool.query('UPDATE "ORDER" SET driverid = NULL WHERE driverid = $1', [req.params.id]);
-        await pool.query('DELETE FROM truck WHERE driverid = $1', [req.params.id]);
-        res.json({ success: true });
+        const result = await pool.query(query, [
+            nextId,
+            customerid || null,
+            storeid || null,
+            driverid || null,
+            price || 0,
+            status || 'PENDING',
+            paymentmethod || 'Credit Card',
+            orderdate || new Date()
+        ]);
+        res.json({ success: true, data: result.rows[0] });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
 });
 
-app.delete('/api/admin/customers/:id', async (req, res) => {
-    try {
-        // Idem, un customer a des commandes.
-        await pool.query('UPDATE "ORDER" SET customerid = NULL WHERE customerid = $1', [req.params.id]);
-        await pool.query('DELETE FROM customer WHERE customerid = $1', [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-app.delete('/api/admin/products/:id', async (req, res) => {
-    try {
-        await pool.query('DELETE FROM product_kashrut WHERE productid = $1', [req.params.id]);
-        await pool.query('DELETE FROM inventory WHERE productid = $1', [req.params.id]); // Ajout de la sécurité sur l'inventaire
-        await pool.query('DELETE FROM product WHERE productid = $1', [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-app.delete('/api/admin/warehouses/:id', async (req, res) => {
-    try {
-        // C'est ICI que ça coinçait. On supprime l'inventaire de cet entrepôt d'abord.
-        await pool.query('DELETE FROM inventory WHERE warehouseid = $1', [req.params.id]);
-        await pool.query('DELETE FROM warehouse WHERE warehouseid = $1', [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-app.delete('/api/admin/stores/:id', async (req, res) => {
-    try {
-        // Un store a aussi un inventaire et des commandes.
-        await pool.query('DELETE FROM inventory WHERE storeid = $1', [req.params.id]);
-        await pool.query('UPDATE "ORDER" SET storeid = NULL WHERE storeid = $1', [req.params.id]);
-        await pool.query('DELETE FROM store WHERE storeid = $1', [req.params.id]);
-        res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-});
-
-// --- ROUTES ADMIN (PUT / MODIFICATION) ---
-
+// ==========================================
+// ROUTES ADMIN (PUT / MODIFICATION)
+// ==========================================
 app.put('/api/admin/warehouses/:id', async (req, res) => {
     const { region, address } = req.body;
     try {
@@ -451,7 +548,6 @@ app.put('/api/admin/warehouses/:id', async (req, res) => {
 app.put('/api/admin/drivers/:id', async (req, res) => {
     const { licenseplate, capacity, email, password } = req.body;
     try {
-        // Note: Si le password est vide, on ne le met pas à jour (logique classique)
         let query = `UPDATE truck SET licenseplate = $1, capacity = $2, email = $3 WHERE driverid = $4 RETURNING *`;
         let params = [licenseplate, capacity, email, req.params.id];
 
@@ -509,7 +605,6 @@ app.put('/api/admin/products/:id', async (req, res) => {
         const query = `UPDATE product SET productname = $1, price = $2, dateofmanufacture = $3, expirationdate = $4, categoryid = $5, supplierid = $6 WHERE productid = $7 RETURNING *`;
         const result = await pool.query(query, [productname, price, dateofmanufacture, expirationdate, categoryid || null, supplierid || null, req.params.id]);
 
-        // Mise à jour simplifiée de la Kashrut : on supprime l'ancienne et on réinsère la nouvelle
         await pool.query('DELETE FROM product_kashrut WHERE productid = $1', [req.params.id]);
         if (kashrut) {
             const kashrutArray = kashrut.split(',').map(k => k.trim());
@@ -523,6 +618,169 @@ app.put('/api/admin/products/:id', async (req, res) => {
         res.status(500).json({ success: false, message: err.message });
     }
 });
+
+// ✅ AJOUTÉ — PUT update order (admin)
+app.put('/api/admin/orders/:id', async (req, res) => {
+    const { customerid, storeid, driverid, price, status, paymentmethod, orderdate } = req.body;
+    try {
+        const query = `
+            UPDATE "ORDER"
+            SET customerid = $1, storeid = $2, driverid = $3, price = $4, status = $5, paymentmethod = $6, orderdate = $7
+            WHERE orderid = $8
+            RETURNING *
+        `;
+        const result = await pool.query(query, [
+            customerid || null,
+            storeid || null,
+            driverid || null,
+            price || 0,
+            status || 'PENDING',
+            paymentmethod || 'Credit Card',
+            orderdate || new Date(),
+            req.params.id
+        ]);
+        res.json({ success: true, data: result.rows[0] });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// --- ORDERS (general status update) ---
+app.put('/api/orders/update-status', async (req, res) => {
+    const { orderid, status } = req.body;
+    try {
+        await pool.query('UPDATE "ORDER" SET status = $1 WHERE orderid = $2', [status, orderid]);
+
+        if (status.toUpperCase() === 'DELIVERED') {
+            const orderRes = await pool.query('SELECT storeid, customerid FROM "ORDER" WHERE orderid = $1', [orderid]);
+            const order = orderRes.rows[0];
+            const itemsRes = await pool.query('SELECT productid, quantity FROM contains WHERE orderid = $1', [orderid]);
+
+            for (let item of itemsRes.rows) {
+                if (order.customerid) {
+                    await pool.query(
+                        'UPDATE inventory SET quantity = quantity - $1 WHERE productid = $2 AND storeid = $3',
+                        [item.quantity, item.productid, order.storeid]
+                    );
+                } else if (order.storeid) {
+                    await pool.query(
+                        'UPDATE inventory SET quantity = quantity + $1 WHERE productid = $2 AND storeid = $3',
+                        [item.quantity, item.productid, order.storeid]
+                    );
+                }
+            }
+        }
+
+        res.json({ success: true, message: `Status successfully updated to ${status}` });
+    } catch (err) {
+        console.error("Error updating order status:", err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+// ==========================================
+// ROUTES ADMIN (DELETE)
+// ==========================================
+app.delete('/api/admin/drivers/:id', async (req, res) => {
+    try {
+        await pool.query('UPDATE "ORDER" SET driverid = NULL WHERE driverid = $1', [req.params.id]);
+        await pool.query('DELETE FROM truck WHERE driverid = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.delete('/api/admin/customers/:id', async (req, res) => {
+    try {
+        await pool.query('UPDATE "ORDER" SET customerid = NULL WHERE customerid = $1', [req.params.id]);
+        await pool.query('DELETE FROM customer WHERE customerid = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.delete('/api/admin/products/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM product_kashrut WHERE productid = $1', [req.params.id]);
+        await pool.query('DELETE FROM inventory WHERE productid = $1', [req.params.id]);
+        await pool.query('DELETE FROM product WHERE productid = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.delete('/api/admin/warehouses/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM inventory WHERE warehouseid = $1', [req.params.id]);
+        await pool.query('DELETE FROM warehouse WHERE warehouseid = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.delete('/api/admin/stores/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM inventory WHERE storeid = $1', [req.params.id]);
+        await pool.query('UPDATE "ORDER" SET storeid = NULL WHERE storeid = $1', [req.params.id]);
+        await pool.query('DELETE FROM store WHERE storeid = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// ✅ AJOUTÉ — DELETE order (admin)
+app.delete('/api/admin/orders/:id', async (req, res) => {
+    try {
+        await pool.query('DELETE FROM contains WHERE orderid = $1', [req.params.id]);
+        await pool.query('DELETE FROM "ORDER" WHERE orderid = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.get('/api/store/:storeid', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM store WHERE storeid = $1', [req.params.storeid]);
+        if (result.rows.length > 0) {
+            res.json({ success: true, user: result.rows[0] });
+        } else {
+            res.json({ success: false });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.get('/api/admin/chart', async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                TO_CHAR(day_series, 'DD') as name,
+                COALESCE(SUM(o.price), 0) as sales
+            FROM generate_series(
+                DATE_TRUNC('month', CURRENT_DATE),
+                DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month' - INTERVAL '1 second',
+                '1 day'::interval
+            ) AS day_series
+            LEFT JOIN "ORDER" o ON DATE(o.orderdate) = DATE(day_series)
+                AND o.price IS NOT NULL
+            GROUP BY day_series
+            ORDER BY day_series ASC
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows.map(r => ({ name: r.name.trim(), sales: parseFloat(r.sales) })));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json([]);
+    }
+});
+
 // ==========================================
 // LANCEMENT DU SERVEUR
 // ==========================================

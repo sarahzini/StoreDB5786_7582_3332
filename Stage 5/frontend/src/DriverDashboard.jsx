@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LayoutDashboard, Truck, X, LogOut, Wrench, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import SalesChart from './SalesChart';
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
@@ -38,7 +39,8 @@ const DriverDashboard = () => {
         setDeliveries(ordersData);
 
         const chartRes = await fetch(`http://localhost:5000/api/driver/chart/${truckData.driverid}`);
-        setChartData(await chartRes.json());
+        const chartJson = await chartRes.json();
+        setChartData(chartJson.map(d => ({ name: d.name, sales: d.deliveries })));
       } catch (err) {
         console.error("Erreur chargement driver:", err);
       }
@@ -133,28 +135,9 @@ const DriverDashboard = () => {
             </div>
 
             <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-              <p className="text-[11px] font-medium text-gray-400 tracking-[0.12em] uppercase mb-6">Daily Deliveries This Month</p>
-              <div className="flex items-end gap-1 h-40">
-                {chartData.map((d, i) => {
-                  const max = Math.max(...chartData.map(x => x.deliveries), 1);
-                  const height = (d.deliveries / max) * 100;
-                  return (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-                      {d.deliveries > 0 && (
-                        <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[9px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                          {d.deliveries}
-                        </div>
-                      )}
-                      <div
-                        className={`w-full rounded-t-sm transition-all ${d.deliveries > 0 ? 'bg-red-500 group-hover:bg-red-600' : 'bg-gray-100'}`}
-                        style={{ height: `${Math.max(height, d.deliveries > 0 ? 4 : 2)}%` }}
-                      />
-                      {parseInt(d.name) % 5 === 0 && (
-                        <span className="text-[8px] text-gray-400">{d.name}</span>
-                      )}
-                    </div>
-                  );
-                })}
+              <p className="text-[11px] font-medium text-gray-400 tracking-[0.12em] uppercase mb-4">Daily Deliveries This Month</p>
+              <div className="w-full">
+                <SalesChart data={chartData} label="Deliveries" prefix="" />
               </div>
             </div>
           </div>

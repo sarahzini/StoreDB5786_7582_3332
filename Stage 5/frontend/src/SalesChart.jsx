@@ -1,9 +1,7 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// On ajoute "{ data }" ici pour recevoir les infos dynamiques
-const SalesChart = ({ data }) => {
-    // Si la base de données ne renvoie rien, on met une ligne plate à zéro
+const SalesChart = ({ data, label = 'Expenses', prefix = '₪' }) => {
     const defaultData = [
         { name: 'Mon', sales: 0 }, { name: 'Tue', sales: 0 },
         { name: 'Wed', sales: 0 }, { name: 'Thu', sales: 0 }
@@ -22,18 +20,11 @@ const SalesChart = ({ data }) => {
                         </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                    <XAxis
-                        dataKey="name"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#9ca3af', fontSize: 9 }}
-                        dy={10}
-                        interval={3} // N'affiche qu'un label sur 4 pour éviter que tout se chevauche
-                    />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} tickFormatter={(value) => `₪${value}`} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9ca3af', fontSize: 9 }} dy={10} interval={3} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9ca3af' }} tickFormatter={(value) => `${prefix}${value}`} domain={['auto', 'auto']} />
                     <Tooltip
                         contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                        formatter={(value) => [`₪${value}`, 'Expenses']}
+                        formatter={(value) => [`${prefix}${value}`, label]}
                     />
                     <Area type="monotone" dataKey="sales" stroke="#dc2626" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
                 </AreaChart>
@@ -41,6 +32,5 @@ const SalesChart = ({ data }) => {
         </div>
     );
 };
-
 
 export default SalesChart;

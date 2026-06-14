@@ -16,6 +16,7 @@ const AdminDashboard = () => {
     const [products, setProducts] = useState([]);
     const [warehouses, setWarehouses] = useState([]);
     const [stores, setStores] = useState([]);
+    const [orders, setOrders] = useState([]); // ✅ AJOUTÉ
 
     const [formData, setFormData] = useState({});
     const [chartData, setChartData] = useState([]);
@@ -29,15 +30,10 @@ const AdminDashboard = () => {
                     fetch('http://localhost:5000/api/admin/stores'),
                     fetch('http://localhost:5000/api/admin/chart')
                 ]);
-                const driversData = await resDrivers.json();
-                const customersData = await resCustomers.json();
-                const storesData = await resStores.json();
-                const chartDataRes = await resChart.json();
-
-                setDrivers(driversData);
-                setCustomers(customersData);
-                setStores(storesData);
-                setChartData(chartDataRes);
+                setDrivers(await resDrivers.json());
+                setCustomers(await resCustomers.json());
+                setStores(await resStores.json());
+                setChartData(await resChart.json());
             } else if (activeTab === 'Logistics') {
                 const res = await fetch('http://localhost:5000/api/admin/drivers');
                 setDrivers(await res.json());
@@ -53,6 +49,9 @@ const AdminDashboard = () => {
             } else if (activeTab === 'Stores') {
                 const res = await fetch('http://localhost:5000/api/admin/stores');
                 setStores(await res.json());
+            } else if (activeTab === 'Orders') { // ✅ AJOUTÉ
+                const res = await fetch('http://localhost:5000/api/admin/orders');
+                setOrders(await res.json());
             }
         } catch (err) {
             console.error("Erreur fetch Admin:", err);
@@ -73,7 +72,6 @@ const AdminDashboard = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // ✅ NOUVELLE FONCTION AJOUTÉE
     const handleEdit = (item) => {
         setFormData(item);
         setIsDrawerOpen(true);
@@ -88,6 +86,7 @@ const AdminDashboard = () => {
             product: `/api/admin/products/${id}`,
             warehouse: `/api/admin/warehouses/${id}`,
             store: `/api/admin/stores/${id}`,
+            order: `/api/admin/orders/${id}`, // ✅ AJOUTÉ
         };
 
         try {
@@ -109,15 +108,14 @@ const AdminDashboard = () => {
         let isEdit = false;
         let id = null;
 
-        // Déterminer l'endpoint et si on est en mode édition
         if (activeTab === 'Products') { endpoint = '/api/admin/products'; if (formData.productid) { isEdit = true; id = formData.productid; } }
         if (activeTab === 'Stores') { endpoint = '/api/admin/stores'; if (formData.storeid) { isEdit = true; id = formData.storeid; } }
         if (activeTab === 'Warehouses') { endpoint = '/api/admin/warehouses'; if (formData.warehouseid) { isEdit = true; id = formData.warehouseid; } }
         if (activeTab === 'Logistics') { endpoint = '/api/admin/drivers'; if (formData.driverid) { isEdit = true; id = formData.driverid; } }
         if (activeTab === 'Customers') { endpoint = '/api/admin/customers'; if (formData.customerid) { isEdit = true; id = formData.customerid; } }
+        if (activeTab === 'Orders') { endpoint = '/api/admin/orders'; if (formData.orderid) { isEdit = true; id = formData.orderid; } } // ✅ AJOUTÉ
 
         try {
-            // Si c'est une édition, on utilise PUT et on ajoute l'ID à l'URL
             const method = isEdit ? 'PUT' : 'POST';
             const url = isEdit ? `http://localhost:5000${endpoint}/${id}` : `http://localhost:5000${endpoint}`;
 
@@ -147,6 +145,7 @@ const AdminDashboard = () => {
         { id: 'Warehouses', icon: Warehouse, label: 'Warehouses' },
         { id: 'Logistics', icon: Truck, label: 'Trucks & Drivers' },
         { id: 'Stores', icon: () => <div className="font-extrabold border-[1.5px] border-current rounded px-1 text-[9px] tracking-widest flex items-center justify-center">RL</div>, label: 'Stores' },
+        { id: 'Orders', icon: ShoppingCart, label: 'Orders' }, // ✅ AJOUTÉ
         { id: 'Customers', icon: Users, label: 'Customers' },
     ];
 
@@ -179,21 +178,10 @@ const AdminDashboard = () => {
                                                 {driver.active === 1 ? 'Active' : 'Offline'}
                                             </span>
                                         </td>
-                                        {/* ✅ CORRECTION ICI : driver */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(driver)}
-                                                    className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete('driver', driver.driverid)}
-                                                    className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <button onClick={() => handleEdit(driver)} className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
+                                                <button onClick={() => handleDelete('driver', driver.driverid)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -223,21 +211,10 @@ const AdminDashboard = () => {
                                         <td className="px-6 py-4 text-sm text-gray-500">{cust.email}</td>
                                         <td className="px-6 py-4 text-sm text-gray-500">{cust.city}</td>
                                         <td className="px-6 py-4 text-sm font-semibold text-amber-600">{cust.loyaltytier || 'Standard'}</td>
-                                        {/* ✅ CORRECTION ICI : cust */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(cust)}
-                                                    className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete('customer', cust.customerid)}
-                                                    className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <button onClick={() => handleEdit(cust)} className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
+                                                <button onClick={() => handleDelete('customer', cust.customerid)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -254,7 +231,8 @@ const AdminDashboard = () => {
                         <table className="w-full">
                             <thead className="bg-gray-50/50">
                                 <tr className="border-b border-gray-50">
-                                    {['ID', 'Product Name', 'Category', 'Price', 'Kashrut', ''].map(h => (
+                                    {/* ✅ 'Category' SUPPRIMÉ */}
+                                    {['ID', 'Product Name', 'Price', 'Kashrut', ''].map(h => (
                                         <th key={h} className="text-left px-6 py-4 text-[10px] font-medium text-gray-400 tracking-[0.1em] uppercase">{h}</th>
                                     ))}
                                 </tr>
@@ -264,11 +242,7 @@ const AdminDashboard = () => {
                                     <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                                         <td className="px-6 py-4 text-sm font-bold text-gray-900">#{item.productid}</td>
                                         <td className="px-6 py-4 text-sm font-medium text-gray-800">{item.productname}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">
-                                            <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-md text-[11px] font-medium">
-                                                {item.categoryname || 'Uncategorized'}
-                                            </span>
-                                        </td>
+                                        {/* ✅ <td> Category SUPPRIMÉ */}
                                         <td className="px-6 py-4 text-sm font-bold text-emerald-600">₪ {parseFloat(item.price).toFixed(2)}</td>
                                         <td className="px-6 py-4">
                                             {item.kashrut_list ? (
@@ -283,26 +257,15 @@ const AdminDashboard = () => {
                                                 <span className="text-gray-400 italic text-[11px]">None</span>
                                             )}
                                         </td>
-                                        {/* ✅ CORRECTION ICI : item */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(item)}
-                                                    className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete('product', item.productid)}
-                                                    className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <button onClick={() => handleEdit(item)} className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
+                                                <button onClick={() => handleDelete('product', item.productid)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
-                                {products.length === 0 && <tr><td colSpan="6" className="text-center py-8 text-gray-500 text-sm">Loading products...</td></tr>}
+                                {products.length === 0 && <tr><td colSpan="5" className="text-center py-8 text-gray-500 text-sm">Loading products...</td></tr>}
                             </tbody>
                         </table>
                     </div>
@@ -328,21 +291,10 @@ const AdminDashboard = () => {
                                         <td className="px-6 py-4">
                                             <span className="text-[10px] font-bold px-2.5 py-1 rounded tracking-wide uppercase bg-emerald-50 text-emerald-600 border border-emerald-100">OPERATIONAL</span>
                                         </td>
-                                        {/* ✅ CORRECTION ICI : wh */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(wh)}
-                                                    className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete('warehouse', wh.warehouseid)}
-                                                    className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <button onClick={() => handleEdit(wh)} className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
+                                                <button onClick={() => handleDelete('warehouse', wh.warehouseid)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -372,26 +324,61 @@ const AdminDashboard = () => {
                                         <td className="px-6 py-4 text-sm text-gray-500">{st.email || 'N/A'}</td>
                                         <td className="px-6 py-4 text-sm text-gray-500">{st.phone || 'N/A'}</td>
                                         <td className="px-6 py-4 text-sm font-semibold text-amber-500 flex items-center gap-1">★ {st.rating || 'N/A'}</td>
-                                        {/* ✅ CORRECTION ICI : st */}
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleEdit(st)}
-                                                    className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete('store', st.storeid)}
-                                                    className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors"
-                                                >
-                                                    Delete
-                                                </button>
+                                                <button onClick={() => handleEdit(st)} className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
+                                                <button onClick={() => handleDelete('store', st.storeid)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
                                             </div>
                                         </td>
                                     </tr>
                                 ))}
                                 {stores.length === 0 && <tr><td colSpan="6" className="text-center py-8 text-gray-500 text-sm">Loading stores...</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+
+            // ✅ NOUVEAU CASE ORDERS
+            case 'Orders':
+                return (
+                    <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                        <table className="w-full">
+                            <thead className="bg-gray-50/50">
+                                <tr className="border-b border-gray-50">
+                                    {['Order ID', 'Customer ID', 'Store ID', 'Driver ID', 'Total (₪)', 'Status', 'Date', ''].map(h => (
+                                        <th key={h} className="text-left px-6 py-4 text-[10px] font-medium text-gray-400 tracking-[0.1em] uppercase">{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {orders.map((order, i) => (
+                                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-6 py-4 text-sm font-bold text-gray-900">#{order.orderid}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{order.customerid ? `#${order.customerid}` : <span className="text-gray-300 italic text-[11px]">—</span>}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{order.storeid ? `#${order.storeid}` : <span className="text-gray-300 italic text-[11px]">—</span>}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-600">{order.driverid ? `#${order.driverid}` : <span className="text-gray-300 italic text-[11px]">—</span>}</td>
+                                        <td className="px-6 py-4 text-sm font-bold text-emerald-600">₪ {parseFloat(order.price || 0).toFixed(2)}</td>
+                                        <td className="px-6 py-4">
+                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded tracking-wide uppercase ${order.status?.toUpperCase() === 'DELIVERED' ? 'bg-emerald-50 text-emerald-600' :
+                                                order.status?.toUpperCase() === 'PENDING' ? 'bg-amber-50 text-amber-600' :
+                                                    order.status?.toUpperCase() === 'CANCELLED' ? 'bg-red-50 text-red-600' :
+                                                        'bg-blue-50 text-blue-600'
+                                                }`}>
+                                                {order.status || 'Unknown'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-gray-400">
+                                            {order.orderdate ? new Date(order.orderdate).toLocaleDateString() : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button onClick={() => handleEdit(order)} className="text-[11px] text-blue-600 font-bold hover:text-blue-800 uppercase tracking-widest bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">Edit</button>
+                                                <button onClick={() => handleDelete('order', order.orderid)} className="text-[11px] text-red-600 font-bold hover:text-red-800 uppercase tracking-widest bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">Delete</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {orders.length === 0 && <tr><td colSpan="8" className="text-center py-8 text-gray-500 text-sm">Loading orders...</td></tr>}
                             </tbody>
                         </table>
                     </div>
@@ -482,6 +469,51 @@ const AdminDashboard = () => {
                         <div><label className={labelClass}>Password</label><input type="password" name="password" onChange={handleChange} className={inputClass} placeholder="Leave blank to keep current" /></div>
                     </div>
                 );
+            // ✅ NOUVEAU FORMULAIRE ORDERS
+            case 'Orders':
+                return (
+                    <div className="space-y-5">
+                        <div>
+                            <label className={labelClass}>Customer ID</label>
+                            <input type="number" name="customerid" value={formData.customerid || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 5 (leave blank for store restock)" />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Store ID</label>
+                            <input type="number" name="storeid" value={formData.storeid || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 2" />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Driver ID</label>
+                            <input type="number" name="driverid" value={formData.driverid || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 3 (optional)" />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Total Price (₪)</label>
+                            <input type="number" step="0.01" name="price" value={formData.price || ''} onChange={handleChange} className={inputClass} placeholder="Ex: 149.90" />
+                        </div>
+                        <div>
+                            <label className={labelClass}>Status</label>
+                            <select name="status" value={formData.status || ''} onChange={handleChange} className={inputClass}>
+                                <option value="">-- Select --</option>
+                                <option value="PENDING">PENDING</option>
+                                <option value="PROCESSING">PROCESSING</option>
+                                <option value="DELIVERED">DELIVERED</option>
+                                <option value="CANCELLED">CANCELLED</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Payment Method</label>
+                            <select name="paymentmethod" value={formData.paymentmethod || ''} onChange={handleChange} className={inputClass}>
+                                <option value="">-- Select --</option>
+                                <option value="Credit Card">Credit Card</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Store Request">Store Request</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className={labelClass}>Order Date</label>
+                            <input type="date" name="orderdate" value={formData.orderdate ? formData.orderdate.split('T')[0] : ''} onChange={handleChange} className={inputClass} />
+                        </div>
+                    </div>
+                );
             default:
                 return null;
         }
@@ -560,7 +592,7 @@ const AdminDashboard = () => {
                                 <div className="bg-white border border-gray-100 rounded-xl p-8 shadow-sm">
                                     <h3 className="text-sm font-bold text-gray-900 mb-6">Global Monthly Sales Overview</h3>
                                     <div style={{ width: '100%', height: 256 }}>
-                                        <SalesChart key={chartData.length} data={chartData} />
+                                        <SalesChart key={chartData.length} data={chartData} label="Revenue" prefix="₪" />
                                     </div>
                                 </div>
                             ) : (
@@ -580,7 +612,7 @@ const AdminDashboard = () => {
                         <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100 bg-gray-50/80">
                             <div>
                                 <h2 className="text-base font-bold text-gray-900">
-                                    {formData.productid || formData.storeid || formData.customerid || formData.warehouseid || formData.driverid ? 'Edit' : 'Add New'} {activeTab === 'Logistics' ? 'Driver' : activeTab.slice(0, -1)}
+                                    {formData.productid || formData.storeid || formData.customerid || formData.warehouseid || formData.driverid || formData.orderid ? 'Edit' : 'Add New'} {activeTab === 'Logistics' ? 'Driver' : activeTab.slice(0, -1)}
                                 </h2>
                                 <p className="text-xs text-gray-500 mt-1">Fill out the details below.</p>
                             </div>
