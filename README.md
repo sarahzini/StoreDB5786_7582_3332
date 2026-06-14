@@ -1683,10 +1683,10 @@ npm install
 Create a `.env` file inside `Stage 5/backend/`:
 
 ```env
-DB_USER_SECRET=sara
+DB_USER_SECRET=your_database_user
 DB_HOST=localhost
-DB_NAME_SECRET=new4
-DB_PASSWORD_SECRET=sara
+DB_NAME_SECRET=your_database_name
+DB_PASSWORD_SECRET=your_database_password
 DB_PORT=5432
 PORT=5000
 ```
