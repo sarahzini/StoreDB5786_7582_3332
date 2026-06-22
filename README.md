@@ -2,6 +2,13 @@
 
 Project by **Sara Heymann 2254681 and Sarah Sebaoun 345887582**
 
+### 🎥 Full Application Showcase & Live Demo
+
+
+https://github.com/user-attachments/assets/3a7e47f5-bc6d-4073-ac1a-c9bd9ddaa11a
+
+---
+
 ## Table of Contents
 - [Phase 1: Design and Build the Database](#phase-1-design-and-build-the-database)
   - [Introduction](#introduction)
