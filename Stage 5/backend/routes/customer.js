@@ -56,10 +56,9 @@ router.get('/orders/:customerid', async (req, res) => {
     }
 });
 
-// POST /api/customer/order — place a new order
+// POST /api/customer/order — place a new order (customerid only, storeid always NULL)
 router.post('/order', async (req, res) => {
-    const { customerid, productid, quantity, storeid } = req.body;
-    const chosenStoreId = storeid || 1;
+    const { customerid, productid, quantity } = req.body;
 
     try {
         // Get product price
@@ -72,10 +71,10 @@ router.post('/order', async (req, res) => {
         const maxResult = await pool.query('SELECT COALESCE(MAX(orderid), 0) + 1 AS nextid FROM "ORDER"');
         const nextId = maxResult.rows[0].nextid;
 
-        // Insert the order
+        // Insert the order — storeid is NULL because this is a customer order
         await pool.query(
-            'INSERT INTO "ORDER" (orderid, customerid, storeid, orderdate, status, price, paymentmethod) VALUES ($1, $2, $3, NOW(), $4, $5, $6)',
-            [nextId, customerid, chosenStoreId, 'PENDING', price, 'Credit Card']
+            'INSERT INTO "ORDER" (orderid, customerid, storeid, orderdate, status, price, paymentmethod) VALUES ($1, $2, NULL, NOW(), $3, $4, $5)',
+            [nextId, customerid, 'PENDING', price, 'Credit Card']
         );
 
         // Insert order items

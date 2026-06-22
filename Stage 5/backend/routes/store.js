@@ -45,7 +45,7 @@ router.get('/order-details/:orderid', async (req, res) => {
             [req.params.orderid]
         );
         const itemsRes = await pool.query(
-            `SELECT p.productname, p.price as unitprice, c.quantity, c.subtotal
+            `SELECT c.productid, p.productname, p.price as unitprice, c.quantity, c.subtotal
              FROM contains c
              JOIN product p ON c.productid = p.productid
              WHERE c.orderid = $1`,
@@ -61,11 +61,13 @@ router.get('/order-details/:orderid', async (req, res) => {
 router.get('/products', async (req, res) => {
     try {
         const query = `
-            SELECT p.productid, p.productname, p.price,
+            SELECT p.productid, p.productname, p.price, p.expirationdate,
+                   c.categoryname,
                    STRING_AGG(pk.kashrut, ', ') AS kashrut_list
             FROM product p
+            LEFT JOIN category c ON p.categoryid = c.categoryid
             LEFT JOIN product_kashrut pk ON p.productid = pk.productid
-            GROUP BY p.productid, p.productname, p.price
+            GROUP BY p.productid, p.productname, p.price, p.expirationdate, c.categoryname
             ORDER BY p.productid ASC
         `;
         const result = await pool.query(query);

@@ -12,31 +12,31 @@ Project by **Sara Heymann 2254681 and Sarah Sebaoun 345887582**
   - [Backup & Restore](#backup--restore)
 - [Phase 2: Queries and Constraints](#phase-2-queries-and-constraints)
   - [Introduction](#phase-2-introduction)
-  - [1. SELECT Queries](#1-select-queries)
-  - [2. COMMIT & ROLLBACK](#2-commit--rollback)
-  - [3. UPDATE Queries](#3-update-queries)
-  - [4. DELETE Queries](#4-delete-queries)
-  - [5. Constraints (ALTER TABLE)](#5-constraints-alter-table)
-  - [6. Indexes](#6-indexes)
-  - [7. Backup](#7-backup-1)
+  - [SELECT Queries](#select-queries)
+  - [COMMIT & ROLLBACK](#commit--rollback)
+  - [UPDATE Queries](#update-queries)
+  - [DELETE Queries](#delete-queries)
+  - [Constraints (ALTER TABLE)](#constraints-alter-table)
+  - [Indexes](#indexes)
+  - [Backup](#backup-1)
 - [Phase 3: System Integration](#phase-3-system-integration)
   - [Introduction](#phase-3-introduction)
-  - [Step 1 - Reverse Engineering: from SQL to ERD](#step-1---reverse-engineering-from-sql-to-erd)
-  - [Step 2 - DSD of the Received Department](#step-2---dsd-of-the-received-department)
-  - [Step 3 - The Two ERDs](#step-3---the-two-erds)
-  - [Step 4 - Integrated ERD & Design Decisions](#step-4---integrated-erd--design-decisions)
-  - [Step 5 - DSD After Integration](#step-5---dsd-after-integration)
-  - [Step 6 - Schema Changes (Integrate.sql)](#step-6---schema-changes-integratesql)
-  - [Step 7 - Data Verification](#step-7---data-verification)
-  - [Step 8 - Backup (backup3)](#step-8---backup-backup3)
+  - [Reverse Engineering: from SQL to ERD](#reverse-engineering-from-sql-to-erd-and-dsd)
+  - [DSD of the Received Department](#dsd-of-the-received-department)
+  - [The Two ERDs](#the-two-erds)
+  - [Integrated ERD & Design Decisions](#integrated-erd--design-decisions)
+  - [DSD After Integration](#dsd-after-integration)
+  - [Schema Changes (Integrate.sql)](#schema-changes-integratesql)
+  - [Data Verification](#data-verification)
+  - [Backup (backup3)](#backup-backup3)
   - [Views](#views)
 - [Phase 4: Programming (PL/pgSQL)](#phase-4-programming-plpgsql)
   - [Introduction](#phase-4-introduction)
-  - [1. Functions](#1-functions)
-  - [2. Procedures](#2-procedures)
-  - [3. Triggers](#3-triggers)
-  - [4. Main Programs](#4-main-programs)
-  - [5. Backup](#5-backup)
+  - [Functions](#functions)
+  - [Procedures](#procedures)
+  - [Triggers](#triggers)
+  - [Main Programs](#main-programs)
+  - [Backup](#backup-2)
 - [Phase 5: Full-Stack Web Application](#phase-5-full-stack-web-application)
   - [Overview](#phase-5-overview)
   - [Architecture](#architecture)
@@ -125,7 +125,7 @@ All SQL query files for this phase can be found in the designated code directory
 
 ---
 
-### 1. SELECT Queries
+### SELECT Queries
 
 #### Double Versions (Comparing Efficiency: A vs B)
 
@@ -393,7 +393,7 @@ ORDER BY rs.TotalRegionalRevenue DESC;
 
 ---
 
-### 2. COMMIT & ROLLBACK
+### COMMIT & ROLLBACK
 
 #### ROLLBACK
 ```sql
@@ -471,7 +471,7 @@ WHERE DriverID IN (SELECT DriverID FROM "ORDER" GROUP BY DriverID HAVING COUNT(*
 
 ---
 
-### 3. UPDATE Queries
+### UPDATE Queries
 
 **1. Restock Based on Minimum:**
 **Description:** Adding 100 units to the inventory for all products that have fallen below their minimum stock threshold.
@@ -519,7 +519,7 @@ WHERE DateOfManufacture < '2024-01-01';
 
 ---
 
-### 4. DELETE Queries
+### DELETE Queries
 
 **1. Remove Old Empty Orders:**
 **Description:** Deleting orders from previous years that do not contain any items (to clean up the system).
@@ -561,7 +561,7 @@ AND DriverID NOT IN (SELECT DriverID FROM "ORDER");
 
 ---
 
-### 5. Constraints (ALTER TABLE)
+### Constraints (ALTER TABLE)
 
 **🚨 Important Note:** A significant portion of our database constraints (Primary Keys, Foreign Keys, `NOT NULL`, and basic checks) were already thoroughly defined directly during the table creation phase. Because of this solid foundation, the new constraints added here via `ALTER TABLE` are specifically targeted at advanced business rules, keeping them simple and effective. You can view our extensive initial constraint setup in our original script: [createTables.sql](Stage%201/createTables.sql).
 
@@ -596,7 +596,7 @@ ADD CONSTRAINT unique_store_phone UNIQUE (Phone);
 
 ---
 
-### 6. Indexes
+### Indexes
 
 **INDEX 1: Optimizing Product Name searches (Textual search)**
 **Description:** Useful for customer-facing search bars.
@@ -636,7 +636,7 @@ EXPLAIN ANALYZE SELECT * FROM "ORDER" WHERE Price > 400;
 
 ---
 
-### 7. Backup
+### Backup
 An updated backup file encompassing all Phase 2 modifications (new table states, constraints, indexes, and test data) has been generated.
 
 💾 **Phase 2 Database Backup File:** [Backup2](Stage%202/Backup2.sql)
@@ -663,7 +663,7 @@ The received database is a **retail / orders system**: customers, product catego
 
 ---
 
-### Step 1 - Reverse Engineering: from SQL to ERD and DSD
+### Reverse Engineering: from SQL to ERD and DSD
 
 We received two files from the other team: their **`createTables.sql`** script and a **database backup**. They serve two different purposes in our workflow:
 
@@ -708,14 +708,14 @@ Running the script automatically produced `erd_new.png`:
 
 ---
 
-### Step 2 - DSD of the Received Department
+### DSD of the Received Department
 
 Thanks to our Python script, the **DSD (Relational Schema)** of the received department (their 8 tables: `customer`, `category`, `supplier`, `product`, `orders`, `orderitem`, `inventory`, `store`) was generated automatically alongside the ERD, perfectly formatted for our report:
 
 ![DSD of the New Department](Stage%203/dsd_new.png)
 ---
 
-### Step 3 - The Two ERDs
+### The Two ERDs
 
 At this point we hold **two** ERDs:
 
@@ -726,7 +726,7 @@ These two diagrams are the input for the design-level integration of the next st
 
 ---
 
-### Step 4 - Integrated ERD & Design Decisions
+### Integrated ERD & Design Decisions
 
 We merged the two ERDs into a single **integrated ERD** using ERDPlus:
 
@@ -745,7 +745,7 @@ Designing the combined model required several decisions, documented here:
 
 ---
 
-### Step 5 - DSD After Integration
+### DSD After Integration
 
 From the integrated ERD we derived the **DSD of the integrated database**:
 
@@ -755,7 +755,7 @@ This DSD is the physical blueprint that `Integrate.sql` builds — but, cruciall
 
 ---
 
-### Step 6 - Schema Changes (Integrate.sql)
+### Schema Changes (Integrate.sql)
 
 All structural and data changes are applied by a single script, executed once inside one transaction (`BEGIN ... COMMIT`) so that any failure rolls everything back.
 
@@ -785,7 +785,7 @@ The received backup was a UTF-16 dump that used `COPY ... FROM stdin`, which the
 
 ---
 
-### Step 7 - Data Verification
+### Data Verification
 
 After running `Integrate.sql`, every table holds data from **both** original databases. The screenshots below show the database state **before** and **after** the integration:
 
@@ -797,7 +797,7 @@ We also re-executed the **Phase 2 queries** on the integrated database to confir
 
 ---
 
-### Step 8 - Backup (backup3)
+### Backup (backup3)
 
 A complete, updated SQL dump of the **integrated database** was generated. It captures the final unified schema together with the merged data from both teams, and guarantees that the integrated system can be fully restored.
 
@@ -908,7 +908,7 @@ This section includes **functions**, **procedures**, **triggers**, and **main pr
  
 ---
  
-### 1. Functions
+### Functions
  
 #### Function 1: Predictive Stock Depletion Algorithm (`generate_predictive_restock_plan`)
  
@@ -1134,7 +1134,7 @@ SELECT optimize_fleet_loading(99999);
  
 ---
  
-### 2. Procedures
+### Procedures
  
 #### Procedure 1: Emergency Inter-Store Inventory Transfer (`process_store_inventory_transfer`)
  
@@ -1313,7 +1313,7 @@ SELECT CustomerID, CustomerName, LoyaltyTier FROM CUSTOMER LIMIT 20;
  
  
 ---
-### 3. Triggers
+### Triggers
 
 #### Trigger 1: Fleet Emergency Reassignment (ON UPDATE)
 
@@ -1446,7 +1446,7 @@ VALUES (1, 1, 99999, 50.00, FALSE);
 
 ---
 
-### 4. Main Programs
+### Main Programs
 
 To tie our subprograms together into practical business use-cases, we created two Main Programs (Anonymous `DO` blocks). Each program integrates exactly **one Function and one Procedure** within a unified workflow.
 
@@ -1550,7 +1550,7 @@ $$;
 
 ---
 
-### 5. Backup
+### Backup
 
 A final, comprehensive SQL dump has been generated, capturing all tables, data, views, and PL/pgSQL programs (functions, procedures, and triggers) developed across all phases.
 
@@ -1764,10 +1764,19 @@ All endpoints are prefixed with `/api`. The backend runs on **port 5000**.
 | `GET` | `/api/admin/drivers` | All drivers |
 | `GET` | `/api/admin/customers` | All customers |
 | `GET` | `/api/admin/products` | All products (with kashrut & category) |
+| `GET` | `/api/admin/categories` | All product categories |
+| `GET` | `/api/admin/suppliers` | All product suppliers |
 | `GET` | `/api/admin/warehouses` | All warehouses |
+| `GET` | `/api/admin/inventory` | Global inventory for all stores |
 | `GET` | `/api/admin/stores` | All stores |
 | `GET` | `/api/admin/orders` | All orders |
+| `GET` | `/api/admin/delivery` | All delivery companies |
 | `GET` | `/api/admin/chart` | Daily global revenue for current month |
+| `GET` | `/api/admin/products/:id/locations` | Warehouse location details for a specific product |
+| `GET` | `/api/admin/drivers/:id/orders` | Today's assigned orders for a driver |
+| `GET` | `/api/admin/delivery/:id/drivers` | Trucks/drivers associated with a delivery company |
+| `GET` | `/api/admin/orders/:id/items` | Full product item list for a specific order |
+| `POST` | `/api/admin/morning-dispatch` | Executes the Morning Dispatch automated routine (PL/pgSQL) |
 | `POST` | `/api/admin/drivers` | Add a driver |
 | `POST` | `/api/admin/customers` | Add a customer |
 | `POST` | `/api/admin/stores` | Add a store |
@@ -1794,6 +1803,54 @@ All endpoints are prefixed with `/api`. The backend runs on **port 5000**.
 
 ### Frontend Pages & Features
 
+#### 📸 Visual Interfaces (Showcase)
+The application features a state-of-the-art UI with full support for Light/Dark modes, advanced glassmorphism, and seamless Right-to-Left (RTL) Hebrew integration.
+
+**1. The Login Portal**
+![Login Hero](images/Stage%205/hero-login.png)
+
+**2. Customer Experience — Overview**
+| Customer Overview (Light Mode - Hebrew RTL) | Customer Overview (Premium Dark Mode - English) |
+| :---: | :---: |
+| ![Customer Overview Light](images/Stage%205/customer_overview_white.png) | ![Customer Overview Dark](images/Stage%205/customer_overview_sombre.png) |
+
+**3. Customer Experience — Shop & Cart**
+| Shop & Cart (Light Mode - Hebrew RTL) | Shop & Cart (Premium Dark Mode - English) |
+| :---: | :---: |
+| ![Customer Shop Light](images/Stage%205/customer_shop_white.png) | ![Customer Shop Dark](images/Stage%205/customer_shop_sombre.png) |
+
+**4. Store Manager — Overview**
+| Store Overview (Light Mode - Hebrew RTL) | Store Overview (Premium Dark Mode - English) |
+| :---: | :---: |
+| ![Store Overview Light](images/Stage%205/store_overview_white.png) | ![Store Overview Dark](images/Stage%205/store_overview_sombre.png) |
+
+**5. Store Manager — Stock Management**
+| Store Inventory (Light Mode - Hebrew RTL) | Store Inventory (Premium Dark Mode - English) |
+| :---: | :---: |
+| ![Store Stock Light](images/Stage%205/store_stock_white.png) | ![Store Stock Dark](images/Stage%205/store_stock_sombre.png) |
+
+**6. Driver Portal — Overview**
+| Driver Overview (Light Mode - Hebrew RTL) | Driver Overview (Premium Dark Mode - English) |
+| :---: | :---: |
+| ![Driver Overview Light](images/Stage%205/driver_overview_white.png) | ![Driver Overview Dark](images/Stage%205/driver_overview_sombre.png) |
+
+**7. Driver Portal — Deliveries**
+| Deliveries (Light Mode - Hebrew RTL) | Deliveries (Premium Dark Mode - English) |
+| :---: | :---: |
+| ![Driver Deliveries Light](images/Stage%205/driver_deliveries_white.png) | ![Driver Deliveries Dark](images/Stage%205/driver_deliveries_sombre.png) |
+
+**8. Admin Dashboard — Overview & Orders**
+| System Overview (Premium Dark Mode) | Order Management |
+| :---: | :---: |
+| ![Admin Overview](images/Stage%205/adminoverview.png) | ![Admin Orders](images/Stage%205/admin_orders.png) |
+
+**9. Admin Dashboard — Logistics & Dispatch**
+| Delivery Companies Management | Morning Dispatch (Start) | Morning Dispatch (Complete) |
+| :---: | :---: | :---: |
+| ![Admin Delivery](images/Stage%205/admin_deliverycompany.png) | ![Morning Dispatch 1](images/Stage%205/morningdispach1.png) | ![Morning Dispatch 2](images/Stage%205/morningdispatch2.png) |
+
+---
+
 #### Login Page (`/`)
 - Role selector: Customer / Store / Driver / Admin
 - Email + password fields with inline error display
@@ -1805,9 +1862,12 @@ All endpoints are prefixed with `/api`. The backend runs on **port 5000**.
 | Tab | Features |
 |-----|----------|
 | **Overview** | Welcome message, Loyalty Badge (Standard / Premium / VIP Gold), total orders, total spent, last 3 orders |
-| **Shop** | Product catalog grid. Each card shows name, price, kashrut badges, and a **Buy Now** button |
-| **My Orders** | Full order history with status badges. **View →** opens a detail modal with product breakdown |
-| **Profile** | Edit name, email, phone, city, street, password. Data always re-fetched from DB on mount |
+| **Shop** | Product catalog grid with **Category Filters**. Each card shows name, price, kashrut badges, a **Heart (Wishlist)** button, and an **Add to Cart** button with inline quantity controls (`+` / `-`). |
+| **Wishlist** | Dedicated tab showing all favorite products saved via `localStorage`. |
+| **My Orders** | Full order history with status badges. **View →** opens a detail modal with a visual **Order Tracking** progress bar. Users can **Cancel** PENDING orders or use the **Buy Again** button to easily re-order past items. |
+| **Profile** | Edit name, email, phone, city, street, password. Data always re-fetched from DB on mount. |
+
+*Note on Cart:* A floating cart button and a side drawer provide real-time updates and subtotal calculations before submitting a grouped order.
 
 #### Store Dashboard (`/store`)
 
@@ -1833,7 +1893,7 @@ Full back-office built with reusable `DataTable`, `Drawer`, and `Field` componen
 
 | Section | Features |
 |---------|----------|
-| **Overview** | Global stats + monthly revenue chart |
+| **Overview** | Global stats, monthly revenue chart, and **Morning Dispatch** automated routine execution |
 | **Products** | CRUD with kashrut tags |
 | **Warehouses** | CRUD with region + address |
 | **Trucks & Drivers** | CRUD with license plate, capacity, status badge |

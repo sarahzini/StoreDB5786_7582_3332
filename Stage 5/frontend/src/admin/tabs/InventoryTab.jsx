@@ -3,22 +3,23 @@ import useTab from '../shared/useTab';
 import DataTable from '../shared/DataTable';
 import Drawer from '../shared/Drawer';
 import { Toast, AddButton } from '../shared/ui';
+import { t } from '../../translations';
 
 const BASE = 'http://localhost:5000';
-const fieldCls = "w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-red-500 transition-all shadow-sm font-medium";
+const fieldCls = "w-full mt-1.5 p-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-50 dark:focus:ring-red-900/30 text-gray-900 dark:text-white transition-all shadow-sm font-medium";
 const labelCls = "block text-[10px] font-bold text-gray-400 tracking-[0.1em] uppercase mb-1";
 
 const COLUMNS = [
     { key: 'productname',  label: 'Product' },
     { key: 'storename',    label: 'Store' },
     { key: 'quantity',     label: 'Qty', render: r => (
-        <span className={`font-bold ${r.quantity < r.minimumstock ? 'text-red-500' : 'text-gray-700'}`}>{r.quantity}</span>
+        <span className={`font-bold ${r.quantity < r.minimumstock ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>{r.quantity}</span>
     )},
     { key: 'minimumstock', label: 'Min Stock' },
 ];
 
-export default function InventoryTab() {
-    const t = useTab('/api/admin/inventory', null);
+export default function InventoryTab({ lang }) {
+    const tab = useTab('/api/admin/inventory', null);
     const [products, setProducts] = useState([]);
     const [stores, setStores]     = useState([]);
     const [confirm, setConfirm]   = useState(null);
@@ -32,10 +33,10 @@ export default function InventoryTab() {
 
     const validate = () => {
         const e = {};
-        if (!t.form.productid) e.productid = 'Please select a product.';
-        if (!t.form.storeid)   e.storeid   = 'Please select a store.';
-        if (t.form.quantity === '' || t.form.quantity === undefined) e.quantity = 'Quantity is required.';
-        if (t.form.minimumstock === '' || t.form.minimumstock === undefined) e.minimumstock = 'Min stock is required.';
+        if (!tab.form.productid) e.productid = 'Please select a product.';
+        if (!tab.form.storeid)   e.storeid   = 'Please select a store.';
+        if (tab.form.quantity === '' || tab.form.quantity === undefined) e.quantity = 'Quantity is required.';
+        if (tab.form.minimumstock === '' || tab.form.minimumstock === undefined) e.minimumstock = 'Min stock is required.';
         setErrors(e);
         return Object.keys(e).length === 0;
     };
@@ -47,16 +48,16 @@ export default function InventoryTab() {
             try {
                 const res = await fetch(`${BASE}/api/admin/inventory?productid=${row.productid}&storeid=${row.storeid}`, { method: 'DELETE' });
                 const result = await res.json();
-                if (result.success) { t.setToast({ type: 'success', text: 'Deleted.' }); t.load(); }
-                else t.setToast({ type: 'error', text: result.message || 'Cannot delete.' });
-            } catch { t.setToast({ type: 'error', text: 'Server error.' }); }
+                if (result.success) { tab.setToast({ type: 'success', text: 'Deleted.' }); tab.load(); }
+                else tab.setToast({ type: 'error', text: result.message || 'Cannot delete.' });
+            } catch { tab.setToast({ type: 'error', text: 'Server error.' }); }
         },
     });
 
     const askSave = () => {
         if (!validate()) return;
-        const productName = products.find(p => parseInt(p.productid) === parseInt(t.form.productid))?.productname || '';
-        const storeName   = stores.find(s => parseInt(s.storeid) === parseInt(t.form.storeid))?.storename || '';
+        const productName = products.find(p => parseInt(p.productid) === parseInt(tab.form.productid))?.productname || '';
+        const storeName   = stores.find(s => parseInt(s.storeid) === parseInt(tab.form.storeid))?.storename || '';
         setConfirm({
             message: `Save inventory entry for "${productName}" at "${storeName}"?`,
             onConfirm: () => { setConfirm(null); doSave(); },
@@ -68,73 +69,73 @@ export default function InventoryTab() {
             const res = await fetch(`${BASE}/api/admin/inventory`, {
                 method: 'POST', // backend uses ON CONFLICT DO UPDATE
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(t.form),
+                body: JSON.stringify(tab.form),
             });
             const result = await res.json();
-            if (result.success) { t.setToast({ type: 'success', text: 'Saved.' }); t.close(); t.load(); }
-            else t.setToast({ type: 'error', text: result.message || 'Error.' });
-        } catch { t.setToast({ type: 'error', text: 'Server error.' }); }
+            if (result.success) { tab.setToast({ type: 'success', text: 'Saved.' }); tab.close(); tab.load(); }
+            else tab.setToast({ type: 'error', text: result.message || 'Error.' });
+        } catch { tab.setToast({ type: 'error', text: 'Server error.' }); }
     };
 
-    const openAdd  = () => { t.openAdd();  setErrors({}); };
-    const openEdit = row => { t.openEdit(row); setErrors({}); };
+    const openAdd  = () => { tab.openAdd();  setErrors({}); };
+    const openEdit = row => { tab.openEdit(row); setErrors({}); };
 
     return (
         <>
-            {t.toast && <Toast message={t.toast.text} type={t.toast.type} onDone={() => t.setToast(null)} />}
+            {tab.toast && <Toast message={t(tab.toast.text, lang)} type={tab.toast.type} onDone={() => tab.setToast(null)} />}
             {confirm && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center">
-                    <div className="absolute inset-0 bg-black/30" />
-                    <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
-                        <p className="text-sm text-gray-700 mb-6">{confirm.message}</p>
+                    <div className="absolute inset-0 bg-black/30 dark:bg-black/60" />
+                    <div className="relative bg-white dark:!bg-transparent dark:bg-gradient-to-br dark:from-[#0B1120] dark:via-[#111827] dark:to-[#450a0a] rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 border border-transparent dark:border-white/10">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-6">{confirm.message}</p>
                         <div className="flex gap-3 justify-end">
-                            <button onClick={() => setConfirm(null)} className="px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase text-gray-500 bg-gray-100 hover:bg-gray-200 transition-colors">Cancel</button>
-                            <button onClick={confirm.onConfirm} className="px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase text-white bg-red-600 hover:bg-red-700 transition-colors">Confirm</button>
+                            <button onClick={() => setConfirm(null)} className="px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">{t('Cancel', lang)}</button>
+                            <button onClick={confirm.onConfirm} className="px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase text-white bg-red-600 hover:bg-red-700 transition-colors">{t('Confirm', lang)}</button>
                         </div>
                     </div>
                 </div>
             )}
-            <AddButton label="Entry" onClick={openAdd} />
-            <DataTable columns={COLUMNS} rows={t.rows} onEdit={openEdit} onDelete={askDelete} emptyLabel="No inventory entries."
-                loading={t.loading} search={t.search} onSearchChange={t.setSearch}
-                page={t.page} totalPages={t.totalPages} onPageChange={t.setPage} totalCount={t.filteredRows.length} />
-            {t.drawer && (
-                <Drawer title="Inventory Entry" onClose={t.close} onSubmit={askSave}>
+            <AddButton label="Entry" onClick={openAdd} lang={lang} />
+            <DataTable columns={COLUMNS} rows={tab.rows} onEdit={openEdit} onDelete={askDelete} emptyLabel={t('No inventory entries.', lang)}
+                loading={tab.loading} search={tab.search} onSearchChange={tab.setSearch}
+                page={tab.page} totalPages={tab.totalPages} onPageChange={tab.setPage} totalCount={tab.filteredRows.length} lang={lang} />
+            {tab.drawer && (
+                <Drawer title={t('Inventory Entry', lang)} onClose={tab.close} onSubmit={askSave} lang={lang}>
                     {/* Product dropdown */}
                     <div>
-                        <label className={labelCls}>Product</label>
-                        <select name="productid" value={t.form.productid || ''} onChange={t.handleChange} className={`${fieldCls} ${errors.productid ? 'border-red-400' : ''}`}>
-                            <option value="">-- Select product --</option>
+                        <label className={labelCls}>{t('Product', lang)}</label>
+                        <select name="productid" value={tab.form.productid || ''} onChange={tab.handleChange} className={`${fieldCls} ${errors.productid ? 'border-red-400 dark:border-red-500/50' : ''}`}>
+                            <option value="">-- {t('Select product', lang)} --</option>
                             {products.map(p => <option key={p.productid} value={p.productid}>{p.productname}</option>)}
                         </select>
-                        {errors.productid && <p className="text-[11px] text-red-500 mt-1">{errors.productid}</p>}
+                        {errors.productid && <p className="text-[11px] text-red-500 mt-1">{t(errors.productid, lang)}</p>}
                     </div>
                     {/* Store dropdown */}
                     <div>
-                        <label className={labelCls}>Store</label>
-                        <select name="storeid" value={t.form.storeid || ''} onChange={t.handleChange} className={`${fieldCls} ${errors.storeid ? 'border-red-400' : ''}`}>
-                            <option value="">-- Select store --</option>
+                        <label className={labelCls}>{t('Store', lang)}</label>
+                        <select name="storeid" value={tab.form.storeid || ''} onChange={tab.handleChange} className={`${fieldCls} ${errors.storeid ? 'border-red-400 dark:border-red-500/50' : ''}`}>
+                            <option value="">-- {t('Select store', lang)} --</option>
                             {stores.map(s => <option key={s.storeid} value={s.storeid}>{s.storename}</option>)}
                         </select>
-                        {errors.storeid && <p className="text-[11px] text-red-500 mt-1">{errors.storeid}</p>}
+                        {errors.storeid && <p className="text-[11px] text-red-500 mt-1">{t(errors.storeid, lang)}</p>}
                     </div>
                     {/* Quantity — integer spinner */}
                     <div>
-                        <label className={labelCls}>Quantity</label>
+                        <label className={labelCls}>{t('Quantity', lang)}</label>
                         <input type="number" name="quantity" step="1" min="0"
-                            value={t.form.quantity !== undefined ? parseInt(t.form.quantity) || 0 : ''}
-                            onChange={e => t.setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 0 }))}
-                            className={`${fieldCls} ${errors.quantity ? 'border-red-400' : ''}`} placeholder="e.g. 100" />
-                        {errors.quantity && <p className="text-[11px] text-red-500 mt-1">{errors.quantity}</p>}
+                            value={tab.form.quantity !== undefined ? parseInt(tab.form.quantity) || 0 : ''}
+                            onChange={e => tab.setForm(f => ({ ...f, quantity: parseInt(e.target.value) || 0 }))}
+                            className={`${fieldCls} ${errors.quantity ? 'border-red-400 dark:border-red-500/50' : ''}`} placeholder="e.g. 100" />
+                        {errors.quantity && <p className="text-[11px] text-red-500 mt-1">{t(errors.quantity, lang)}</p>}
                     </div>
                     {/* Min stock — integer spinner */}
                     <div>
-                        <label className={labelCls}>Minimum Stock</label>
+                        <label className={labelCls}>{t('Minimum Stock', lang)}</label>
                         <input type="number" name="minimumstock" step="1" min="0"
-                            value={t.form.minimumstock !== undefined ? parseInt(t.form.minimumstock) || 0 : ''}
-                            onChange={e => t.setForm(f => ({ ...f, minimumstock: parseInt(e.target.value) || 0 }))}
-                            className={`${fieldCls} ${errors.minimumstock ? 'border-red-400' : ''}`} placeholder="e.g. 10" />
-                        {errors.minimumstock && <p className="text-[11px] text-red-500 mt-1">{errors.minimumstock}</p>}
+                            value={tab.form.minimumstock !== undefined ? parseInt(tab.form.minimumstock) || 0 : ''}
+                            onChange={e => tab.setForm(f => ({ ...f, minimumstock: parseInt(e.target.value) || 0 }))}
+                            className={`${fieldCls} ${errors.minimumstock ? 'border-red-400 dark:border-red-500/50' : ''}`} placeholder="e.g. 10" />
+                        {errors.minimumstock && <p className="text-[11px] text-red-500 mt-1">{t(errors.minimumstock, lang)}</p>}
                     </div>
                 </Drawer>
             )}

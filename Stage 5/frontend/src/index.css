@@ -8,16 +8,315 @@
 }
 
 * {
-  -ms-overflow-style: none !important;  /* IE and Edge */
-  scrollbar-width: none !important;     /* Firefox */
+  -ms-overflow-style: none !important;
+  /* IE and Edge */
+  scrollbar-width: none !important;
+  /* Firefox */
 }
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* --- PREMIUM DARK MODE OVERRIDES --- */
+html.dark,
+html.dark body,
+.dark main {
+  background-color: #0A0A0A !important;
+  color: #EDEDED !important;
+}
+
+/* Surfaces */
+.dark .bg-white {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-gray-50\/50,
+.dark .bg-gray-50\/60 {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Fix nested glassmorphism stacking */
+.dark .bg-white .bg-white,
+.dark .bg-white .bg-gray-50,
+.dark .bg-white .bg-gray-100 {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.dark .bg-\[\#F8F9FB\] {
+  background: linear-gradient(to bottom right, #0B1120, #111827, #450a0a) !important;
+  background-attachment: fixed !important;
+  position: relative;
+}
+
+/* Ambient glows for the dashboard background */
+.dark .bg-\[\#F8F9FB\]::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 60%;
+  background-color: rgba(220, 38, 38, 0.15);
+  filter: blur(120px);
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+
+.dark .bg-\[\#F8F9FB\]::after {
+  content: '';
+  position: absolute;
+  bottom: 10%;
+  right: 10%;
+  width: 50%;
+  height: 50%;
+  background-color: rgba(153, 27, 27, 0.15);
+  filter: blur(120px);
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+
+/* Text colors */
+.dark .text-gray-900 {
+  color: #FAFAFA !important;
+}
+
+.dark .text-gray-800 {
+  color: #F4F4F5 !important;
+}
+
+.dark .text-gray-700 {
+  color: #E4E4E7 !important;
+}
+
+.dark .text-gray-600 {
+  color: #D4D4D8 !important;
+}
+
+.dark .text-gray-500 {
+  color: #A1A1AA !important;
+}
+
+.dark .text-gray-400 {
+  color: #71717A !important;
+}
+
+.dark .text-gray-300 {
+  color: #52525B !important;
+}
+
+/* Borders */
+.dark .border-gray-100 {
+  border-color: #262626 !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #3F3F46 !important;
+}
+
+/* Hover states */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-50\/50:hover,
+.dark .hover\:bg-gray-50\/60:hover {
+  background-color: #1F1F1F !important;
+  border-color: #3F3F46 !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+  background-color: #262626 !important;
+  border-color: #3F3F46 !important;
+}
+
+.dark .hover\:bg-gray-200:hover {
+  background-color: #3F3F46 !important;
+}
+
+.dark .hover\:text-gray-900:hover {
+  color: #FFFFFF !important;
+}
+
+.dark .hover\:text-gray-800:hover {
+  color: #FAFAFA !important;
+}
+
+.dark .hover\:text-gray-500:hover {
+  color: #D4D4D8 !important;
+}
+
+/* Form elements */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(12px) !important;
+  color: #FAFAFA !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.dark input:focus {
+  border-color: #EF4444 !important;
+}
+
+/* Tables */
+.dark th {
+  background-color: #141414 !important;
+  color: #A1A1AA !important;
+  border-color: #262626 !important;
+}
+
+.dark td,
+.dark tr {
+  border-color: #262626 !important;
+}
+
+.dark tr:hover {
+  background-color: #1A1A1A !important;
+}
+
+/* Shadows */
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark .shadow-lg,
+.dark .shadow-xl {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.7), 0 4px 6px -2px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Backdrop */
+.dark .backdrop-blur-sm {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.dark .backdrop-blur-md {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.dark .backdrop-blur-xl {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Neon Pills & Badges Adjustment for Dark Mode */
+.dark .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+.dark .text-emerald-600 {
+  color: #34D399 !important;
+}
+
+.dark .bg-red-50 {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.dark .text-red-500,
+.dark .text-red-600 {
+  color: #F87171 !important;
+}
+
+.dark .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .text-blue-600 {
+  color: #60A5FA !important;
+}
+
+.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.dark .text-amber-500 {
+  color: #FBBF24 !important;
+}
+
+.dark .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.1) !important;
+  border-color: rgba(249, 115, 22, 0.2) !important;
+}
+
+.dark .text-orange-600 {
+  color: #FB923C !important;
+}
+
+.dark .bg-red-600 {
+  background-color: #E11D48 !important;
+}
+
+.dark .hover\:bg-red-700:hover {
+  background-color: #BE123C !important;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
