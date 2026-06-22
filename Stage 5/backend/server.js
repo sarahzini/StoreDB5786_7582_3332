@@ -10,6 +10,7 @@ const customerRoutes = require('./routes/customer');
 const storeRoutes = require('./routes/store');
 const driverRoutes = require('./routes/driver');
 const adminRoutes = require('./routes/admin');
+const adminExtraRoutes = require('./routes/admin_extra');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/customer', customerRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/driver', driverRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminExtraRoutes);
 
 // Status update route (shared across roles)
 const pool = require('./db');

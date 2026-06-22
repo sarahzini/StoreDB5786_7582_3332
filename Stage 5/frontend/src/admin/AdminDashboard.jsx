@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 
 import OverviewTab    from './tabs/OverviewTab';
 import ProductsTab    from './tabs/ProductsTab';
-import CategoriesTab  from './tabs/CategoriesTab';
 import SuppliersTab   from './tabs/SuppliersTab';
 import InventoryTab   from './tabs/InventoryTab';
 import WarehousesTab  from './tabs/WarehousesTab';
@@ -20,7 +19,6 @@ import CustomersTab   from './tabs/CustomersTab';
 const NAV = [
     { id: 'Overview',    icon: LayoutDashboard, label: 'Overview' },
     { id: 'Products',    icon: Package,          label: 'Products' },
-    { id: 'Categories',  icon: Tag,              label: 'Categories' },
     { id: 'Suppliers',   icon: Building2,        label: 'Suppliers' },
     { id: 'Inventory',   icon: Box,              label: 'Inventory' },
     { id: 'Warehouses',  icon: Warehouse,        label: 'Warehouses' },
@@ -34,7 +32,6 @@ const NAV = [
 const TABS = {
     Overview:   OverviewTab,
     Products:   ProductsTab,
-    Categories: CategoriesTab,
     Suppliers:  SuppliersTab,
     Inventory:  InventoryTab,
     Warehouses: WarehousesTab,

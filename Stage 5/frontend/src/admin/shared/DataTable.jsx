@@ -3,15 +3,12 @@ import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 export default function DataTable({
     columns, rows, onEdit, onDelete,
     emptyLabel = 'No data.', loading = false,
-    // Search
     search = '', onSearchChange = null,
-    // Pagination
     page = 1, totalPages = 1, onPageChange = null,
     totalCount = 0,
 }) {
     return (
         <div>
-            {/* Search bar */}
             {onSearchChange && (
                 <div className="mb-4 flex items-center gap-3">
                     <div className="relative flex-1 max-w-xs">
@@ -25,10 +22,7 @@ export default function DataTable({
                         />
                     </div>
                     {search && (
-                        <button
-                            onClick={() => onSearchChange('')}
-                            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                        >
+                        <button onClick={() => onSearchChange('')} className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
                             Clear
                         </button>
                     )}
@@ -36,7 +30,6 @@ export default function DataTable({
                 </div>
             )}
 
-            {/* Table */}
             <div className="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full" style={{ borderCollapse: 'collapse' }}>
@@ -53,7 +46,6 @@ export default function DataTable({
                         </thead>
                         <tbody>
                             {loading ? (
-                                // Skeleton rows
                                 [...Array(5)].map((_, i) => (
                                     <tr key={i} className="border-b border-gray-50">
                                         {columns.map(c => (
@@ -108,25 +100,34 @@ export default function DataTable({
                     </table>
                 </div>
 
-                {/* Pagination */}
+                {/* Pagination — scrollable with cursor */}
                 {onPageChange && totalPages > 1 && (
                     <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-                        <span className="text-xs text-gray-400">
-                            Page {page} of {totalPages}
-                        </span>
-                        <div className="flex items-center gap-1">
+                        <span className="text-xs text-gray-400 flex-shrink-0">Page {page} of {totalPages}</span>
+                        <div className="flex items-center gap-1 overflow-x-auto max-w-[75%] py-1 cursor-grab active:cursor-grabbing"
+                            ref={el => {
+                                if (!el) return;
+                                // drag-to-scroll
+                                let isDown = false, startX, scrollLeft;
+                                el.onmousedown = e => { isDown = true; startX = e.pageX - el.offsetLeft; scrollLeft = el.scrollLeft; };
+                                el.onmouseleave = () => { isDown = false; };
+                                el.onmouseup = () => { isDown = false; };
+                                el.onmousemove = e => { if (!isDown) return; e.preventDefault(); el.scrollLeft = scrollLeft - (e.pageX - el.offsetLeft - startX); };
+                            }}
+                        >
                             <button
                                 onClick={() => onPageChange(page - 1)}
                                 disabled={page === 1}
-                                className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                className="flex-shrink-0 p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
                                 <ChevronLeft size={14} />
                             </button>
+
                             {[...Array(totalPages)].map((_, i) => (
                                 <button
                                     key={i}
                                     onClick={() => onPageChange(i + 1)}
-                                    className={`w-7 h-7 rounded-lg text-xs font-semibold transition-all ${
+                                    className={`flex-shrink-0 w-7 h-7 rounded-lg text-xs font-semibold transition-all ${
                                         page === i + 1
                                             ? 'bg-red-600 text-white border border-red-600'
                                             : 'border border-gray-200 text-gray-500 hover:bg-white'
@@ -135,10 +136,11 @@ export default function DataTable({
                                     {i + 1}
                                 </button>
                             ))}
+
                             <button
                                 onClick={() => onPageChange(page + 1)}
                                 disabled={page === totalPages}
-                                className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                className="flex-shrink-0 p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
                                 <ChevronRight size={14} />
                             </button>

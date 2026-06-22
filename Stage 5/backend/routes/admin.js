@@ -44,11 +44,12 @@ router.get('/products', async (req, res) => {
             LEFT JOIN category c ON p.categoryid = c.categoryid
             LEFT JOIN supplier s ON p.supplierid = s.supplierid
             LEFT JOIN product_kashrut pk ON p.productid = pk.productid
-            GROUP BY p.productid, c.categoryname, s.suppliername
+            GROUP BY p.productid, p.productname, p.price, p.dateofmanufacture, p.expirationdate,
+                     p.categoryid, c.categoryname, p.supplierid, s.suppliername
             ORDER BY p.productid
         `);
         res.json(r.rows);
-    } catch { res.status(500).json([]); }
+    } catch (err) { res.status(500).json([]); }
 });
 
 router.get('/warehouses', async (req, res) => {
