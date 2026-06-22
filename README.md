@@ -1,6 +1,7 @@
 # Logistics & Inventory Management System (Rami Levy)
 
-Project by **Sara Heymann 2254681 and Sarah Sebaoun 345887582**
+> **Academic Project**
+> Developed by **Sara Heymann** (2254681) & **Sarah Sebaoun** (345887582)
 
 ### 🎥 Full Application Showcase & Live Demo
 
