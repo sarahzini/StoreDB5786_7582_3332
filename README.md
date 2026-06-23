@@ -54,6 +54,7 @@ https://github.com/user-attachments/assets/3a7e47f5-bc6d-4073-ac1a-c9bd9ddaa11a
   - [Environment Variables](#environment-variables)
   - [Running the Application](#running-the-application)
   - [API Reference](#api-reference)
+  - [Query and Run Main Phase 4 Programs](#query-and-run-main-phase-4-programs)
   - [Frontend Pages & Features](#frontend-pages--features)
   - [Database Schema](#database-schema-key-tables)
   - [Key Design Decisions](#key-design-decisions)
@@ -1161,6 +1162,8 @@ CREATE OR REPLACE PROCEDURE process_store_inventory_transfer(
     p_target_store_id INT,
     p_transfer_qty INT
 )
+
+996
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -1579,7 +1582,7 @@ The application provides **four distinct role-based dashboards**, each tailored 
 | **Customer** | Browse the product catalog, place orders, view order history, manage profile |
 | **Store Manager** | Monitor inventory, send restock requests, browse catalog, track supply orders |
 | **Driver** | View assigned deliveries, update order status, track monthly activity |
-| **Admin** | Full CRUD access to all entities: drivers, customers, products, stores, warehouses, orders |
+| **Admin** | Full CRUD access to all entities: drivers, customers, products, stores, warehouses, orders + Queries and Main of Phase 4 |
 
 ---
 
@@ -1784,7 +1787,7 @@ All endpoints are prefixed with `/api`. The backend runs on **port 5000**.
 | `GET` | `/api/admin/drivers/:id/orders` | Today's assigned orders for a driver |
 | `GET` | `/api/admin/delivery/:id/drivers` | Trucks/drivers associated with a delivery company |
 | `GET` | `/api/admin/orders/:id/items` | Full product item list for a specific order |
-| `POST` | `/api/admin/morning-dispatch` | Executes the Morning Dispatch automated routine (PL/pgSQL) |
+| `POST` | `/api/admin/morning-dispatch` | Executes the Morning Dispatch automated routine MAIN OF PHASE 4 (PL/pgSQL) |
 | `POST` | `/api/admin/drivers` | Add a driver |
 | `POST` | `/api/admin/customers` | Add a customer |
 | `POST` | `/api/admin/stores` | Add a store |
@@ -1807,7 +1810,47 @@ All endpoints are prefixed with `/api`. The backend runs on **port 5000**.
 |--------|----------|-------------|
 | `PUT` | `/api/orders/update-status` | Update any order's status. When set to `DELIVERED`, automatically adjusts inventory (decrease for customer orders, increase for restock orders). |
 
+
 ---
+
+### Query and Run Main Phase 4 Programs
+
+A key feature of the Admin Dashboard is its direct integration with the **PL/pgSQL programs** developed in Phase 4. Rather than running these programs manually in pgAdmin, the admin can trigger them and visualize their output directly from the web interface.
+
+---
+
+#### Live Detail Popups
+
+Several tabs include a **View** button on each row that opens a popup fetching live data from the database:
+
+| Popup | Triggered from | Underlying Query |
+| :--- | :--- | :--- |
+| **Warehouses 📦** | Products tab | `SELECT` on `located` JOIN `warehouse` — shows region, aisle & shelf number for each product |
+| **Today's Orders 🚚** | Trucks & Drivers tab | `SELECT` on `ORDER` WHERE `driverid = X AND DATE(deliverydate) = CURRENT_DATE` |
+| **Linked Trucks 🚛** | Delivery Companies tab | `SELECT` on `truck` WHERE `deliverycieid = X` |
+| **Order Items 🛒** | Orders tab | `SELECT` on `contains` JOIN `product` WHERE `orderid = X` |
+
+---
+
+#### Morning Dispatch — Running Phase 4 Main Program 1
+
+The **"🌅 Morning Dispatch"** sub-tab in the Overview section allows the admin to execute **Main Program 1** from Phase 4 directly from the browser, with a full visual report.
+
+**What it does:**
+- **Step 1** calls `optimize_fleet_loading(1)` *(Function 2 from Phase 4)*: assigns all `PENDING` orders to available trucks of Delivery Company #1, maximizing capacity usage. Returns a manifest of all driver → order assignments.
+- **Step 2** calls `process_store_inventory_transfer(1, 5, 30)` *(Procedure 1 from Phase 4)*: resolves an overnight stock shortage by transferring 30 units of Product #1 to Store #5.
+
+**How it works technically:**
+The frontend calls `POST /api/admin/morning-dispatch`. The backend opens a PostgreSQL transaction, calls both PL/pgSQL programs, collects the cursor output from Step 1, and returns a structured JSON report. The UI displays:
+- Real-time step status cards animating: idle → running → ✅ success / ❌ error
+- A full assignment table (Driver ID, Order ID, Truck Capacity) for Step 1
+- A confirmation card for the stock transfer result of Step 2
+
+**Proof of Execution:**
+
+| Morning Dispatch — Ready | Morning Dispatch — Complete |
+| :---: | :---: |
+| ![Morning Dispatch 1](images/Stage%205/morningdispach1.png) | ![Morning Dispatch 2](images/Stage%205/morningdispatch2.png) |
 
 ### Frontend Pages & Features
 
